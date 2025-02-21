@@ -138,7 +138,7 @@ include '../../includes/header.php';
                     <input type="file" id="company_logo" name="company_logo" accept="image/*">
                     <?php if ($settings['company_logo']): ?>
                         <div class="current-logo">
-                            <img src="<?php echo htmlspecialchars($settings['company_logo']); ?>" 
+                            <img src="<?php echo getBaseUrl() . htmlspecialchars($settings['company_logo']); ?>" 
                                  alt="Logo actual" style="max-width: 200px;">
                         </div>
                     <?php endif; ?>
