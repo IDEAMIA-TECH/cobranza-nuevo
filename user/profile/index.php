@@ -23,11 +23,11 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 // Obtener datos del cliente
-$query = "SELECT c.*, u.email 
+$select_query = "SELECT c.*, u.email 
           FROM clients c 
           JOIN users u ON u.id = c.user_id 
           WHERE u.id = :user_id";
-$stmt = $db->prepare($query);
+$stmt = $db->prepare($select_query);
 $stmt->bindParam(":user_id", $_SESSION['user_id']);
 $stmt->execute();
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success = "Perfil actualizado correctamente";
 
         // Recargar datos del cliente
-        $stmt = $db->prepare($query);
+        $stmt = $db->prepare($select_query);
         $stmt->bindParam(":user_id", $_SESSION['user_id']);
         $stmt->execute();
         $client = $stmt->fetch(PDO::FETCH_ASSOC);
