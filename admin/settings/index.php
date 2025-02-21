@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
             
             if (in_array($ext, $allowed)) {
-                $upload_path = '../../assets/img/';
+                $upload_path = __DIR__ . '/../../assets/img/';
                 $new_filename = 'logo_' . time() . '.' . $ext;
                 
                 if (move_uploaded_file($_FILES['company_logo']['tmp_name'], $upload_path . $new_filename)) {

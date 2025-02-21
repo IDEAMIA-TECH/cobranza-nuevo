@@ -16,18 +16,42 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
     <title><?php echo Settings::get('system_name', 'Sistema de Cobranza'); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?php echo getBaseUrl(); ?>/assets/css/styles.css">
+    <style>
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .company-logo {
+            height: 40px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+        
+        .company-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <header>
         <nav>
             <div class="logo">
                 <a href="<?php echo getBaseUrl(); ?>">
-                    <?php if (Settings::get('company_logo')): ?>
-                        <img src="<?php echo Settings::get('company_logo'); ?>" 
+                    <?php if ($logo = Settings::get('company_logo')): ?>
+                        <img src="<?php echo getBaseUrl() . $logo; ?>" 
                              alt="<?php echo Settings::get('company_name'); ?>" 
-                             height="40">
+                             class="company-logo">
                     <?php else: ?>
-                        <?php echo Settings::get('company_name'); ?>
+                        <span class="company-name">
+                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
+                        </span>
                     <?php endif; ?>
                 </a>
             </div>
