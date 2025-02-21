@@ -5,55 +5,61 @@ require_once '../../config/database.php';
 // Verificar si el usuario está logueado
 redirectIfNotLoggedIn();
 
+// Verificar que no sea administrador
+if (isAdmin()) {
+    header("Location: ../../admin/dashboard.php");
+    exit();
+}
+
 $database = new Database();
 $db = $database->getConnection();
-
-// Obtener información del cliente
-$query = "SELECT c.* FROM clients c 
-          JOIN users u ON u.id = c.user_id 
-          WHERE u.id = :user_id";
-$stmt = $db->prepare($query);
-$stmt->bindParam(":user_id", $_SESSION['user_id']);
-$stmt->execute();
-$client = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Parámetros de filtrado y paginación
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-$payment_method = isset($_GET['payment_method']) ? cleanInput($_GET['payment_method']) : '';
-$date_from = isset($_GET['date_from']) ? cleanInput($_GET['date_from']) : '';
-$date_to = isset($_GET['date_to']) ? cleanInput($_GET['date_to']) : '';
+// Obtener ID del cliente
+$query = "SELECT id FROM clients WHERE user_id = :user_id";
+$stmt = $db->prepare($query);
+$stmt->bindParam(":user_id", $_SESSION['user_id']);
+$stmt->execute();
+$client = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$client) {
+    header("Location: ../dashboard/");
+    exit();
+}
 
 // Construir la consulta base
 $query = "SELECT p.*, i.invoice_number, i.total_amount as invoice_total,
-          u.name as registered_by_name 
-          FROM payments p 
-          JOIN invoices i ON i.id = p.invoice_id 
-          LEFT JOIN users u ON u.id = p.registered_by 
-          WHERE i.client_id = :client_id";
+          u.email as registered_by_email
+          FROM payments p
+          JOIN invoices i ON i.id = p.invoice_id
+          JOIN users u ON u.id = p.created_by
+          JOIN clients c ON c.id = i.client_id
+          WHERE c.id = :client_id";
 
 $params = [':client_id' => $client['id']];
 
 // Agregar filtros si existen
-if ($payment_method) {
-    $query .= " AND p.payment_method = :payment_method";
-    $params[':payment_method'] = $payment_method;
+if (isset($_GET['status']) && !empty($_GET['status'])) {
+    $query .= " AND p.status = :status";
+    $params[':status'] = cleanInput($_GET['status']);
 }
 
-if ($date_from) {
+if (isset($_GET['date_from']) && !empty($_GET['date_from'])) {
     $query .= " AND DATE(p.payment_date) >= :date_from";
-    $params[':date_from'] = $date_from;
+    $params[':date_from'] = cleanInput($_GET['date_from']);
 }
 
-if ($date_to) {
+if (isset($_GET['date_to']) && !empty($_GET['date_to'])) {
     $query .= " AND DATE(p.payment_date) <= :date_to";
-    $params[':date_to'] = $date_to;
+    $params[':date_to'] = cleanInput($_GET['date_to']);
 }
 
 // Obtener total de registros para paginación
-$count_query = str_replace("p.*, i.invoice_number, i.total_amount as invoice_total,\n          u.name as registered_by_name", "COUNT(*) as total", $query);
+$count_query = str_replace("p.*, i.invoice_number, i.total_amount as invoice_total, u.email as registered_by_email", "COUNT(*) as total", $query);
 $stmt = $db->prepare($count_query);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
@@ -63,167 +69,186 @@ $total_records = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 $total_pages = ceil($total_records / $per_page);
 
 // Agregar ordenamiento y límites
-$query .= " ORDER BY p.payment_date DESC LIMIT :offset, :per_page";
-$params[':offset'] = $offset;
-$params[':per_page'] = $per_page;
+$query .= " ORDER BY p.payment_date DESC LIMIT :limit OFFSET :offset";
 
 // Ejecutar consulta principal
 $stmt = $db->prepare($query);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
 }
+$stmt->bindValue(':limit', $per_page, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Obtener totales por método de pago
-$query = "SELECT payment_method, COUNT(*) as count, SUM(amount) as total 
-          FROM payments p 
-          JOIN invoices i ON i.id = p.invoice_id 
-          WHERE i.client_id = :client_id 
-          GROUP BY payment_method";
-$stmt = $db->prepare($query);
-$stmt->bindParam(":client_id", $client['id']);
-$stmt->execute();
-$payment_stats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 include '../../includes/header.php';
 ?>
 
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h2>Historial de Pagos</h2>
+        <h2>Mis Pagos</h2>
+        <div class="header-actions">
+            <a href="register.php" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Registrar Pago
+            </a>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <?php foreach ($payment_stats as $stat): ?>
-            <div class="stat-card">
-                <div class="stat-title">
-                    <span class="payment-method <?php echo $stat['payment_method']; ?>">
-                        <?php 
-                        echo $stat['payment_method'] === 'transfer' ? 'Transferencia' : 
-                             ($stat['payment_method'] === 'cash' ? 'Efectivo' : 
-                              ($stat['payment_method'] === 'check' ? 'Cheque' : 
-                               'Tarjeta')); 
-                        ?>
-                    </span>
-                </div>
-                <div class="stat-value">$<?php echo number_format($stat['total'], 2); ?></div>
-                <div class="stat-subtitle"><?php echo $stat['count']; ?> pagos</div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-
+    <!-- Filtros -->
     <div class="filters-section">
         <form method="GET" class="filters-form">
             <div class="form-row">
                 <div class="form-group">
-                    <label for="payment_method">Método de Pago:</label>
-                    <select name="payment_method" id="payment_method" class="form-control">
+                    <label for="status">Estado:</label>
+                    <select id="status" name="status" class="form-control">
                         <option value="">Todos</option>
-                        <option value="transfer" <?php echo $payment_method === 'transfer' ? 'selected' : ''; ?>>
-                            Transferencia
-                        </option>
-                        <option value="cash" <?php echo $payment_method === 'cash' ? 'selected' : ''; ?>>
-                            Efectivo
-                        </option>
-                        <option value="check" <?php echo $payment_method === 'check' ? 'selected' : ''; ?>>
-                            Cheque
-                        </option>
-                        <option value="card" <?php echo $payment_method === 'card' ? 'selected' : ''; ?>>
-                            Tarjeta
-                        </option>
+                        <option value="pending" <?php echo isset($_GET['status']) && $_GET['status'] === 'pending' ? 'selected' : ''; ?>>Pendiente</option>
+                        <option value="processed" <?php echo isset($_GET['status']) && $_GET['status'] === 'processed' ? 'selected' : ''; ?>>Procesado</option>
+                        <option value="rejected" <?php echo isset($_GET['status']) && $_GET['status'] === 'rejected' ? 'selected' : ''; ?>>Rechazado</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="date_from">Desde:</label>
                     <input type="date" id="date_from" name="date_from" 
-                           value="<?php echo $date_from; ?>" class="form-control">
+                           value="<?php echo isset($_GET['date_from']) ? $_GET['date_from'] : ''; ?>" 
+                           class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label for="date_to">Hasta:</label>
                     <input type="date" id="date_to" name="date_to" 
-                           value="<?php echo $date_to; ?>" class="form-control">
+                           value="<?php echo isset($_GET['date_to']) ? $_GET['date_to'] : ''; ?>" 
+                           class="form-control">
                 </div>
-            </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn">
-                    <i class="fas fa-search"></i> Filtrar
-                </button>
-                <a href="index.php" class="btn btn-secondary">
-                    <i class="fas fa-undo"></i> Limpiar
-                </a>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="index.php" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Limpiar
+                    </a>
+                </div>
             </div>
         </form>
     </div>
 
+    <!-- Tabla de pagos -->
     <div class="table-responsive">
-        <?php if (empty($payments)): ?>
-            <p class="no-data">No se encontraron pagos</p>
-        <?php else: ?>
-            <table class="table">
-                <thead>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Factura</th>
+                    <th>Fecha de Pago</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Referencia</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($payments)): ?>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Factura</th>
-                        <th>Monto</th>
-                        <th>Método</th>
-                        <th>Referencia</th>
-                        <th>Registrado por</th>
-                        <th>Acciones</th>
+                        <td colspan="7" class="text-center">No se encontraron pagos</td>
                     </tr>
-                </thead>
-                <tbody>
+                <?php else: ?>
                     <?php foreach ($payments as $payment): ?>
                         <tr>
+                            <td><?php echo htmlspecialchars($payment['invoice_number']); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($payment['payment_date'])); ?></td>
-                            <td>
-                                <a href="../invoices/view.php?id=<?php echo $payment['invoice_id']; ?>">
-                                    <?php echo htmlspecialchars($payment['invoice_number']); ?>
-                                </a>
-                            </td>
                             <td>$<?php echo number_format($payment['amount'], 2); ?></td>
+                            <td><?php echo htmlspecialchars($payment['payment_method']); ?></td>
+                            <td><?php echo htmlspecialchars($payment['reference']); ?></td>
                             <td>
-                                <span class="payment-method <?php echo $payment['payment_method']; ?>">
+                                <span class="status-badge <?php echo $payment['status']; ?>">
                                     <?php 
-                                    echo $payment['payment_method'] === 'transfer' ? 'Transferencia' : 
-                                         ($payment['payment_method'] === 'cash' ? 'Efectivo' : 
-                                          ($payment['payment_method'] === 'check' ? 'Cheque' : 
-                                           'Tarjeta')); 
+                                    echo $payment['status'] === 'pending' ? 'Pendiente' : 
+                                         ($payment['status'] === 'processed' ? 'Procesado' : 'Rechazado'); 
                                     ?>
                                 </span>
                             </td>
-                            <td><?php echo htmlspecialchars($payment['reference']); ?></td>
-                            <td><?php echo htmlspecialchars($payment['registered_by_name']); ?></td>
-                            <td class="actions">
-                                <a href="../invoices/view.php?id=<?php echo $payment['invoice_id']; ?>" 
-                                   class="btn btn-small" title="Ver factura">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                            <td>
+                                <a href="view.php?id=<?php echo $payment['id']; ?>" 
+                                   class="btn btn-small">Ver Detalles</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-
-            <?php if ($total_pages > 1): ?>
-                <div class="pagination">
-                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                        <a href="?page=<?php echo $i; ?>&<?php echo http_build_query(array_filter([
-                            'payment_method' => $payment_method,
-                            'date_from' => $date_from,
-                            'date_to' => $date_to
-                        ])); ?>" 
-                           class="btn <?php echo $page === $i ? 'active' : ''; ?>">
-                            <?php echo $i; ?>
-                        </a>
-                    <?php endfor; ?>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
+
+    <!-- Paginación -->
+    <?php if ($total_pages > 1): ?>
+        <div class="pagination">
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?page=<?php echo $i; ?>" 
+                   class="<?php echo $page === $i ? 'active' : ''; ?>">
+                    <?php echo $i; ?>
+                </a>
+            <?php endfor; ?>
+        </div>
+    <?php endif; ?>
 </div>
+
+<style>
+.filters-section {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filters-form .form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+.status-badge.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.processed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.pagination a {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+.pagination a.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+</style>
 
 <?php include '../../includes/footer.php'; ?> 
