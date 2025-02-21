@@ -1,3 +1,4 @@
+<?php ob_start(); ?>
 <?php
 require_once '../../includes/functions.php';
 require_once '../../config/database.php';
@@ -80,4 +81,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 } else {
     header('Location: index.php');
     exit();
-} 
+}
+ob_end_flush(); 

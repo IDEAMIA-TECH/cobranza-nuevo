@@ -1,4 +1,6 @@
 <?php
+if (ob_get_level() == 0) ob_start();
+
 require_once 'SecurityHelper.php';
 
 session_start();
@@ -24,6 +26,7 @@ function redirectIfNotAdmin() {
 
 function redirectIfNotLoggedIn() {
     if (!isLoggedIn()) {
+        $_SESSION['error'] = "Debe iniciar sesión para acceder a esta página";
         header("Location: " . getBaseUrl() . "/login.php");
         exit();
     }
