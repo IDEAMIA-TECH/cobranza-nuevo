@@ -378,11 +378,6 @@ if (isLoggedIn()) {
                         <i class="fas fa-money-bill"></i> Mis Pagos
                     </a>
                 </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/payments/register.php">
-                        <i class="fas fa-plus-circle"></i> Registrar Pago
-                    </a>
-                </li>
                 <li class="menu-divider">Soporte</li>
                 <li>
                     <a href="<?php echo getBaseUrl(); ?>/user/support/">

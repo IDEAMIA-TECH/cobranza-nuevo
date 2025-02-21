@@ -87,11 +87,6 @@ include '../../includes/header.php';
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h2>Mis Pagos</h2>
-        <div class="header-actions">
-            <a href="register.php" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Registrar Pago
-            </a>
-        </div>
     </div>
 
     <!-- Filtros -->
