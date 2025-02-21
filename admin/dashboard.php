@@ -66,23 +66,6 @@ include '../includes/header.php';
 <div class="dashboard-container admin-dashboard">
     <div class="dashboard-header">
         <h2>Panel de Administración</h2>
-        <div class="header-actions">
-            <a href="<?php echo getBaseUrl(); ?>/admin/clients/pending.php" class="btn btn-primary">
-                <i class="fas fa-user-clock"></i> Clientes Pendientes
-            </a>
-            <a href="<?php echo getBaseUrl(); ?>/admin/invoices/create.php" class="btn btn-secondary">
-                <i class="fas fa-file-invoice"></i> Nueva Factura
-            </a>
-            <a href="clients/index.php" class="btn btn-primary">
-                <i class="fas fa-users"></i> Ver Todos los Clientes
-            </a>
-            <a href="email_logs/index.php" class="btn btn-info">
-                <i class="fas fa-envelope"></i> Historial de Correos
-            </a>
-            <a href="settings/index.php" class="btn btn-dark">
-                <i class="fas fa-cog"></i> Configuración
-            </a>
-        </div>
     </div>
 
     <div class="stats-grid">

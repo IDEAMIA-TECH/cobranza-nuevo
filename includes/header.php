@@ -88,6 +88,39 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             text-align: center;
         }
 
+        .menu-divider {
+            padding: 1rem 1.5rem 0.5rem;
+            color: #6c757d;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            border-top: 1px solid #eee;
+            margin-top: 0.5rem;
+        }
+
+        .menu-divider:first-child {
+            border-top: none;
+            margin-top: 0;
+        }
+
+        .sidebar-menu li:not(.menu-divider) {
+            padding: 0;
+        }
+
+        .sidebar-menu li:not(.menu-divider) a {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu li:not(.menu-divider) a:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
         nav {
             display: flex;
             justify-content: space-between;
@@ -205,9 +238,62 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                         <i class="fas fa-tachometer-alt"></i> Panel Admin
                     </a>
                 </li>
+                <li class="menu-divider">Clientes</li>
                 <li>
                     <a href="<?php echo getBaseUrl(); ?>/admin/clients/">
                         <i class="fas fa-users"></i> Clientes
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/clients/pending.php">
+                        <i class="fas fa-user-clock"></i> Clientes Pendientes
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/clients/create.php">
+                        <i class="fas fa-user-plus"></i> Nuevo Cliente
+                    </a>
+                </li>
+                <li class="menu-divider">Facturación</li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/invoices/">
+                        <i class="fas fa-file-invoice"></i> Facturas
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/invoices/create.php">
+                        <i class="fas fa-file-invoice"></i> Nueva Factura
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/payments/register.php">
+                        <i class="fas fa-money-bill"></i> Registrar Pago
+                    </a>
+                </li>
+                <li class="menu-divider">Sistema</li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/activity_logs/">
+                        <i class="fas fa-history"></i> Registro de Actividad
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/email_logs/">
+                        <i class="fas fa-envelope"></i> Historial de Correos
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/settings/">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/profile/">
+                        <i class="fas fa-user-circle"></i> Mi Perfil
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>
             <?php else: ?>

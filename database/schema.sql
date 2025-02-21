@@ -164,4 +164,13 @@ INSERT INTO system_settings (setting_key, setting_value, setting_description) VA
 ('smtp_user', 'cobranza@devgdlhost.com', 'Usuario SMTP'),
 ('smtp_password', ')S8y{k6aHqf~', 'Contraseña SMTP'),
 ('smtp_port', '587', 'Puerto SMTP'),
-('smtp_from', 'no-reply@devgdl.com', 'Email remitente'); 
+('smtp_from', 'no-reply@devgdl.com', 'Email remitente');
+
+CREATE TABLE admin_profiles (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    avatar_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB; 
