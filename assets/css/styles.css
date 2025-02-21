@@ -627,6 +627,24 @@ textarea.form-control {
     color: #4a148c;
 }
 
+.table a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.table .btn a,
+.table a.btn {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.table a:hover,
+.table .btn a:hover,
+.table a.btn:hover {
+    color: #ffffff;
+    text-decoration: none;
+}
+
 .report-sections {
     display: grid;
     gap: 2rem;
