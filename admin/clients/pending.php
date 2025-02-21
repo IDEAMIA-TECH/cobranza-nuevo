@@ -69,14 +69,14 @@ include '../../includes/header.php';
                                     <form method="POST" action="approve.php" style="display: inline;">
                                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                         <input type="hidden" name="user_id" value="<?php echo $client['user_id']; ?>">
-                                        <button type="submit" class="btn btn-small btn-success">
+                                        <button type="submit" class="btn btn-sm btn-success">
                                             <i class="fas fa-check"></i> Aprobar
                                         </button>
                                     </form>
                                     <form method="POST" action="reject.php" style="display: inline;">
                                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                         <input type="hidden" name="user_id" value="<?php echo $client['user_id']; ?>">
-                                        <button type="submit" class="btn btn-small btn-danger">
+                                        <button type="submit" class="btn btn-sm btn-danger">
                                             <i class="fas fa-times"></i> Rechazar
                                         </button>
                                     </form>

@@ -831,4 +831,30 @@ select option {
 /* Iconos en botones */
 .btn i {
     margin-right: 0.25rem;
+}
+
+/* Estilos globales para botones con iconos */
+.btn-primary i,
+.btn-success i,
+.btn-warning i,
+.btn-danger i,
+.btn-secondary i {
+    color: white;
+}
+
+.btn-sm.btn-primary i,
+.btn-sm.btn-success i,
+.btn-sm.btn-warning i,
+.btn-sm.btn-danger i,
+.btn-sm.btn-secondary i {
+    color: white;
+    font-size: 0.9em;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+.btn-sm i {
+    margin-right: 0;
 } 

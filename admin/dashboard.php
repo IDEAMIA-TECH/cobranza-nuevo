@@ -192,9 +192,15 @@ include '../includes/header.php';
     </div>
 
     <div class="action-buttons">
-        <a href="invoices/create.php" class="btn">Nueva Factura</a>
-        <a href="clients/create.php" class="btn">Nuevo Cliente</a>
-        <a href="payments/register.php" class="btn">Registrar Pago</a>
+        <a href="invoices/create.php" class="btn btn-primary">
+            <i class="fas fa-file-invoice"></i> Nueva Factura
+        </a>
+        <a href="clients/create.php" class="btn btn-success">
+            <i class="fas fa-user-plus"></i> Nuevo Cliente
+        </a>
+        <a href="payments/register.php" class="btn btn-secondary">
+            <i class="fas fa-money-bill"></i> Registrar Pago
+        </a>
     </div>
 </div>
 

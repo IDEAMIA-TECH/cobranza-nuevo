@@ -79,8 +79,12 @@ include '../../includes/header.php';
     <div class="dashboard-header">
         <h2>Detalles del Cliente</h2>
         <div class="header-actions">
-            <a href="index.php" class="btn btn-secondary">Volver</a>
-            <a href="edit.php?id=<?php echo $client_id; ?>" class="btn">Editar Cliente</a>
+            <a href="index.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="edit.php?id=<?php echo $client_id; ?>" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar Cliente
+            </a>
         </div>
     </div>
 

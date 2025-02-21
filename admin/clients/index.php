@@ -125,33 +125,6 @@ function activateClient(clientId) {
 </script>
 
 <style>
-.btn i {
-    margin-right: 5px;
-}
-
-.btn-sm i {
-    margin-right: 0;
-}
-
-/* Iconos blancos para botones de color */
-.btn-primary i,
-.btn-success i,
-.btn-warning i,
-.btn-danger i,
-.btn-secondary i {
-    color: white;
-}
-
-/* Ajuste específico para botones pequeños */
-.btn-sm.btn-primary i,
-.btn-sm.btn-success i,
-.btn-sm.btn-warning i,
-.btn-sm.btn-danger i,
-.btn-sm.btn-secondary i {
-    color: white;
-    font-size: 0.9em;
-}
-
 .invoice-stats {
     display: flex;
     gap: 10px;

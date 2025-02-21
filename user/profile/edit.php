@@ -183,6 +183,9 @@ include '../../includes/header.php';
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Guardar Cambios
             </button>
+            <a href="index.php" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
         </div>
     </form>
 </div>
