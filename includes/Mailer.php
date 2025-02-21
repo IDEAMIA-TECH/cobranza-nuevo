@@ -13,25 +13,32 @@ class Mailer {
     public function __construct() {
         $this->mail = new PHPMailer(true);
         
-        // Configuración del servidor SMTP
-        $this->mail->isSMTP();
-        $this->mail->Host = Settings::get('smtp_host');
-        $this->mail->SMTPAuth = true;
-        $this->mail->Username = Settings::get('smtp_user');
-        $this->mail->Password = Settings::get('smtp_password');
-        $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $this->mail->Port = Settings::get('smtp_port');
-        
-        // Configuración general
-        $this->mail->setFrom(
-            Settings::get('smtp_from'), 
-            Settings::get('company_name')
-        );
-        $this->mail->isHTML(true);
-        $this->mail->CharSet = 'UTF-8';
-        
-        $database = new Database();
-        $this->db = $database->getConnection();
+        try {
+            // Configuración del servidor SMTP
+            $this->mail->isSMTP();
+            $this->mail->SMTPDebug = 2;  // Habilitar debug
+            $this->mail->Host = Settings::get('smtp_host');
+            $this->mail->SMTPAuth = true;
+            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mail->Username = Settings::get('smtp_user');
+            $this->mail->Password = Settings::get('smtp_password');
+            $this->mail->Port = Settings::get('smtp_port');
+            $this->mail->Timeout = 30;  // Aumentar timeout
+            
+            // Configuración general
+            $this->mail->setFrom(
+                Settings::get('smtp_from'), 
+                Settings::get('company_name')
+            );
+            $this->mail->isHTML(true);
+            $this->mail->CharSet = 'UTF-8';
+            
+            $database = new Database();
+            $this->db = $database->getConnection();
+        } catch (Exception $e) {
+            error_log("Error inicializando Mailer: " . $e->getMessage());
+            throw $e;
+        }
     }
     
     public function sendNewInvoiceNotification($client, $invoice) {
@@ -46,6 +53,13 @@ class Mailer {
 
             // Limpiar destinatarios anteriores
             $this->mail->clearAddresses();
+            
+            // Debug
+            error_log("Intentando enviar correo a: " . $client['email']);
+            error_log("Configuración SMTP: " . 
+                     "Host=" . $this->mail->Host . 
+                     ", User=" . $this->mail->Username . 
+                     ", Port=" . $this->mail->Port);
             
             // Obtener la plantilla de correo
             $query = "SELECT * FROM email_templates WHERE type = 'new_invoice' LIMIT 1";
