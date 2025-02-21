@@ -81,26 +81,22 @@ include '../../includes/header.php';
                         </div>
                     </td>
                     <td>
-                        <div class="action-buttons">
-                            <a href="view.php?id=<?php echo $client['id']; ?>" 
-                               class="btn btn-sm btn-primary" title="Ver Detalles">
-                                <i class="fas fa-eye"></i>
+                        <div class="actions">
+                            <a href="view.php?id=<?php echo $client['id']; ?>" class="btn btn-small btn-primary">
+                                <i class="fas fa-eye"></i> Ver
                             </a>
-                            <a href="edit.php?id=<?php echo $client['id']; ?>" 
-                               class="btn btn-sm btn-warning" title="Editar">
-                                <i class="fas fa-edit"></i>
+                            <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-small btn-secondary">
+                                <i class="fas fa-edit"></i> Editar
                             </a>
-                            <?php if ($client['user_status'] === 'active'): ?>
-                                <button onclick="deactivateClient(<?php echo $client['id']; ?>)" 
-                                        class="btn btn-sm btn-danger" title="Desactivar">
-                                    <i class="fas fa-user-slash"></i>
+                            <form method="POST" action="toggle_status.php" class="d-inline" onsubmit="return confirm('¿Está seguro de cambiar el estado del cliente?');">
+                                <?php echo SecurityHelper::getCSRFTokenField(); ?>
+                                <input type="hidden" name="client_id" value="<?php echo $client['id']; ?>">
+                                <input type="hidden" name="current_status" value="<?php echo $client['status']; ?>">
+                                <button type="submit" class="btn btn-small <?php echo $client['status'] === 'active' ? 'btn-danger' : 'btn-success'; ?>">
+                                    <i class="fas <?php echo $client['status'] === 'active' ? 'fa-ban' : 'fa-check'; ?>"></i>
+                                    <?php echo $client['status'] === 'active' ? 'Desactivar' : 'Activar'; ?>
                                 </button>
-                            <?php else: ?>
-                                <button onclick="activateClient(<?php echo $client['id']; ?>)" 
-                                        class="btn btn-sm btn-success" title="Activar">
-                                    <i class="fas fa-user-check"></i>
-                                </button>
-                            <?php endif; ?>
+                            </form>
                         </div>
                     </td>
                 </tr>

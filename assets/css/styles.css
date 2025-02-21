@@ -398,21 +398,25 @@ select.form-control {
 }
 
 .btn-success {
-    background-color: var(--success-color);
+    background-color: #28a745;
+    border-color: #28a745;
     color: white;
 }
 
 .btn-success:hover {
-    background-color: #27ae60;
+    background-color: #218838;
+    border-color: #1e7e34;
 }
 
 .btn-danger {
-    background-color: var(--error-color);
+    background-color: #dc3545;
+    border-color: #dc3545;
     color: white;
 }
 
 .btn-danger:hover {
-    background-color: #c0392b;
+    background-color: #c82333;
+    border-color: #bd2130;
 }
 
 .status-badge.active {
@@ -885,4 +889,8 @@ select option {
 .header-actions .btn i,
 .action-buttons .btn i {
     color: white !important;
+}
+
+.d-inline {
+    display: inline-block;
 } 
