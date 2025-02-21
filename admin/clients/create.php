@@ -187,10 +187,20 @@ include '../../includes/header.php';
                 <h3>Información Fiscal</h3>
                 
                 <div class="form-group">
+                    <label for="csf_file">Constancia de Situación Fiscal (PDF):</label>
+                    <input type="file" id="csf_file" name="csf_file" accept=".pdf" required>
+                    <small class="form-text text-muted">
+                        Suba la Constancia de Situación Fiscal en formato PDF para autocompletar los datos
+                    </small>
+                </div>
+
+                <div id="loading_csf" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Procesando documento...
+                </div>
+
+                <div class="form-group">
                     <label for="business_name">Razón Social:</label>
-                    <input type="text" id="business_name" name="business_name" required 
-                           value="<?php echo isset($_POST['business_name']) ? htmlspecialchars($_POST['business_name']) : ''; ?>"
-                           style="text-transform: uppercase;">
+                    <input type="text" id="business_name" name="business_name" class="csf-field" required>
                 </div>
 
                 <div class="form-group">
@@ -315,6 +325,66 @@ include '../../includes/header.php';
         </div>
     </form>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csfInput = document.getElementById('csf_file');
+    const loadingIndicator = document.getElementById('loading_csf');
+    
+    // Cargar worker de PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+    
+    csfInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        loadingIndicator.style.display = 'block';
+        
+        try {
+            // Leer el archivo PDF
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+            const page = await pdf.getPage(1);
+            const textContent = await page.getTextContent();
+            const text = textContent.items.map(item => item.str).join(' ');
+            
+            // Extraer información usando expresiones regulares
+            const rfc = text.match(/RFC:\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/);
+            const businessName = text.match(/DENOMINACIÓN\/RAZÓN SOCIAL:\s*(.*?)\s*(?:RFC|$)/i);
+            const regimen = text.match(/RÉGIMEN.*?:\s*(.*?)\s*(?:DOMICILIO|$)/i);
+            const cp = text.match(/C\.?P\.?:\s*(\d{5})/);
+            
+            // Autocompletar campos
+            if (rfc) document.getElementById('rfc').value = rfc[1];
+            if (businessName) document.getElementById('business_name').value = businessName[1].trim();
+            if (regimen) document.getElementById('tax_regime').value = regimen[1].trim();
+            if (cp) document.getElementById('zip_code').value = cp[1];
+            
+            // Guardar el archivo
+            const formData = new FormData();
+            formData.append('csf_file', file);
+            formData.append('action', 'upload_csf');
+            
+            const response = await fetch('process_csf.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            
+        } catch (error) {
+            console.error('Error procesando CSF:', error);
+            alert('Error al procesar el documento. Por favor, verifique que sea un PDF válido.');
+        } finally {
+            loadingIndicator.style.display = 'none';
+        }
+    });
+});
+</script>
 
 <?php 
 include '../../includes/footer.php';

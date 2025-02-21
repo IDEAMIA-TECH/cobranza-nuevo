@@ -75,61 +75,9 @@ function parseInvoiceXML($xml_content) {
     return $data;
 }
 
-// Función para procesar el PDF
-function parsePDFText($pdf_path) {
-    $parser = new \Smalot\PdfParser\Parser();
-    $pdf = $parser->parseFile($pdf_path);
-    $text = $pdf->getText();
-    
-    // Extraer datos relevantes usando expresiones regulares
-    $data = [];
-    
-    // RFC
-    if (preg_match('/RFC:\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/', $text, $matches)) {
-        $data['rfc'] = $matches[1];
-    }
-    
-    // Razón Social
-    if (preg_match('/Denominación\/Nombre:\s*([^\n]+)/', $text, $matches)) {
-        $data['business_name'] = trim($matches[1]);
-    }
-    
-    // Régimen Fiscal
-    if (preg_match('/Régimen Fiscal:\s*(\d+)\s*([^\n]+)/', $text, $matches)) {
-        $data['tax_regime'] = $matches[1] . ' - ' . trim($matches[2]);
-    }
-    
-    // Código Postal
-    if (preg_match('/C\.P\.?\s*(\d{5})/', $text, $matches)) {
-        $data['zip_code'] = $matches[1];
-    }
-    
-    return $data;
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Procesar Constancia de Situación Fiscal
-        if (isset($_FILES['csf_file']) && $_FILES['csf_file']['error'] === UPLOAD_ERR_OK) {
-            $temp_pdf_directory = '../../uploads/temp/';
-            if (!file_exists($temp_pdf_directory)) {
-                mkdir($temp_pdf_directory, 0755, true);
-            }
-
-            $temp_pdf_path = $temp_pdf_directory . uniqid() . '.pdf';
-            move_uploaded_file($_FILES['csf_file']['tmp_name'], $temp_pdf_path);
-
-            $csf_data = parsePDFText($temp_pdf_path);
-            unlink($temp_pdf_path); // Eliminar archivo temporal
-
-            if (!empty($csf_data)) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'data' => $csf_data]);
-                exit;
-            }
-        }
-
-        // Procesar archivos XML
+        // Procesar archivos XML si fueron subidos
         if (isset($_FILES['xml_files'])) {
             $results = [];
             $temp_xml_directory = '../../uploads/temp/';
@@ -339,23 +287,6 @@ include '../../includes/header.php';
     <?php if ($success): ?>
         <div class="alert alert-success"><?php echo $success; ?></div>
     <?php endif; ?>
-
-    <div class="form-section">
-        <h3>Cargar Constancia de Situación Fiscal</h3>
-        <form method="POST" enctype="multipart/form-data" id="csf-form" class="upload-form">
-            <?php echo SecurityHelper::getCSRFTokenField(); ?>
-            <div class="form-group">
-                <label for="csf_file">Archivo PDF de la Constancia:</label>
-                <input type="file" id="csf_file" name="csf_file" accept=".pdf" required>
-                <small class="form-text text-muted">
-                    Suba la Constancia de Situación Fiscal para autocompletar los datos del cliente
-                </small>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-upload"></i> Procesar CSF
-            </button>
-        </form>
-    </div>
 
     <!-- Formulario para cargar XML -->
     <div class="form-section">
