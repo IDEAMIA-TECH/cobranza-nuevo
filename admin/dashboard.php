@@ -185,7 +185,7 @@ include '../includes/header.php';
         <div class="dashboard-section">
             <h3>Últimas Actividades</h3>
             <div class="section-actions">
-                <a href="<?php echo getBaseUrl(); ?>/admin/index.php" class="btn btn-link">Ver todas</a>
+                <a href="<?php echo getBaseUrl(); ?>/admin/activity_logs/index.php" class="btn btn-link">Ver todas</a>
             </div>
             <!-- ... -->
         </div>
