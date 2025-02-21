@@ -16,9 +16,18 @@ $db = $database->getConnection();
 $success = '';
 $error = '';
 
+// Generar token CSRF si no existe
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            throw new Exception('Error de validación CSRF');
+        }
+
         $db->beginTransaction();
         
         // Actualizar configuraciones
@@ -112,6 +121,8 @@ include '../../includes/header.php';
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data" class="settings-form">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+        
         <div class="settings-sections">
             <div class="settings-section">
                 <h3>Información de la Empresa</h3>
