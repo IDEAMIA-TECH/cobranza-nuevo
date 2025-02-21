@@ -148,119 +148,115 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Si se envió el formulario completo
         if (isset($_POST['save_invoice'])) {
-            // Recuperar datos del XML de la sesión
-            $invoice_data = $_SESSION['invoice_data'] ?? [];
-
+            // Recuperar resultados de la sesión
+            $results = $_SESSION['invoice_results'] ?? [];
+            $success_count = 0;
+  
             $db->beginTransaction();
-
-            // Verificar que tengamos los datos del XML
-            if (empty($invoice_data)) {
-                throw new Exception("No se ha cargado ningún XML para procesar");
+  
+            // Verificar que tengamos resultados para procesar
+            if (empty($results)) {
+                throw new Exception("No hay facturas pendientes de procesar");
             }
-
-            // Verificar que tengamos todos los datos necesarios
-            $required_fields = ['client_id', 'invoice_number', 'issue_date', 'uuid', 'total'];
-            foreach ($required_fields as $field) {
-                if (!isset($invoice_data[$field])) {
-                    throw new Exception("Falta información requerida del XML: " . $field);
+  
+            // Procesar cada factura exitosa
+            foreach ($results as $result) {
+                if ($result['status'] !== 'success' || empty($result['data'])) {
+                    continue;
                 }
-            }
-
-            // Validar y limpiar datos
-            $client_id = (int)$invoice_data['client_id'];
-            $invoice_number = $invoice_data['invoice_number'];
-            $issue_date = date('Y-m-d', strtotime($invoice_data['issue_date']));
-            $credit_days = $invoice_data['credit_days'] > 0 ? $invoice_data['credit_days'] : 0;
-            $due_date = date('Y-m-d', strtotime("+{$credit_days} days"));
-
-            // Mover el archivo XML a la ubicación final
-            $xml_directory = '../../uploads/xml/';
-            if (!file_exists($xml_directory)) {
-                mkdir($xml_directory, 0755, true);
-            }
-            $temp_path = $temp_xml_directory . $xml_filename;
-            $final_path = $xml_directory . $xml_filename;
-            if (file_exists($temp_path)) {
-                rename($temp_path, $final_path);
-            }
-
-            // Guardar la factura en la base de datos
-            $xml_path = 'uploads/xml/' . $xml_filename;
-            $total_amount = $invoice_data['total'];
-            $uuid = $invoice_data['uuid'];
-
-            $query = "INSERT INTO invoices (client_id, invoice_uuid, invoice_number, 
-                                         issue_date, due_date, total_amount, 
-                                         xml_path, status) 
-                     VALUES (:client_id, :uuid, :invoice_number, 
-                            :issue_date, :due_date, :total_amount, 
-                            :xml_path, 'pending')";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(":client_id", $client_id);
-            $stmt->bindParam(":uuid", $uuid);
-            $stmt->bindParam(":invoice_number", $invoice_number);
-            $stmt->bindParam(":issue_date", $issue_date);
-            $stmt->bindParam(":due_date", $due_date);
-            $stmt->bindParam(":total_amount", $total_amount);
-            $stmt->bindParam(":xml_path", $xml_path);
-            $stmt->execute();
-
-            $invoice_id = $db->lastInsertId();
-
-            // Guardar los conceptos de la factura
-            foreach ($invoice_data['items'] as $item) {
-                $product_key = $item['product_key'];
-                $description = $item['description'];
-                $quantity = $item['quantity'];
-                $unit_price = $item['unit_price'];
-                $subtotal = $item['subtotal'];
-                $tax_amount = $item['tax_amount'];
-                $total = $item['total'];
-
-                $query = "INSERT INTO invoice_items (invoice_id, product_key, description, 
-                                                   quantity, unit_price, subtotal, 
-                                                   tax_amount, total) 
-                         VALUES (:invoice_id, :product_key, :description, 
-                                :quantity, :unit_price, :subtotal, 
-                                :tax_amount, :total)";
+  
+                $invoice_data = $result['data'];
+                
+                // Validar datos necesarios
+                $required_fields = ['client_id', 'invoice_number', 'issue_date', 'uuid', 'total'];
+                foreach ($required_fields as $field) {
+                    if (!isset($invoice_data[$field])) {
+                        continue 2; // Saltar a la siguiente factura
+                    }
+                }
+  
+                // Preparar datos
+                $client_id = (int)$invoice_data['client_id'];
+                $invoice_number = $invoice_data['invoice_number'];
+                $issue_date = date('Y-m-d', strtotime($invoice_data['issue_date']));
+                $credit_days = $invoice_data['credit_days'] > 0 ? $invoice_data['credit_days'] : 0;
+                $due_date = date('Y-m-d', strtotime($issue_date . " +{$credit_days} days"));
+                
+                // Mover archivo XML
+                $xml_directory = '../../uploads/xml/';
+                if (!file_exists($xml_directory)) {
+                    mkdir($xml_directory, 0755, true);
+                }
+                
+                $xml_filename = $invoice_data['uuid'] . '.xml';
+                $temp_path = $temp_xml_directory . $xml_filename;
+                $final_path = $xml_directory . $xml_filename;
+                
+                if (file_exists($temp_path)) {
+                    rename($temp_path, $final_path);
+                }
+                
+                $xml_path = 'uploads/xml/' . $xml_filename;
+                $total_amount = $invoice_data['total'];
+                $uuid = $invoice_data['uuid'];
+  
+                // Guardar la factura en la base de datos
+                $query = "INSERT INTO invoices (client_id, invoice_uuid, invoice_number, 
+                                             issue_date, due_date, total_amount, 
+                                             xml_path, status) 
+                         VALUES (:client_id, :uuid, :invoice_number, 
+                                :issue_date, :due_date, :total_amount, 
+                                :xml_path, 'pending')";
                 $stmt = $db->prepare($query);
-                $stmt->bindParam(":invoice_id", $invoice_id);
-                $stmt->bindParam(":product_key", $product_key);
-                $stmt->bindParam(":description", $description);
-                $stmt->bindParam(":quantity", $quantity);
-                $stmt->bindParam(":unit_price", $unit_price);
-                $stmt->bindParam(":subtotal", $subtotal);
-                $stmt->bindParam(":tax_amount", $tax_amount);
-                $stmt->bindParam(":total", $total);
+                $stmt->bindParam(":client_id", $client_id);
+                $stmt->bindParam(":uuid", $uuid);
+                $stmt->bindParam(":invoice_number", $invoice_number);
+                $stmt->bindParam(":issue_date", $issue_date);
+                $stmt->bindParam(":due_date", $due_date);
+                $stmt->bindParam(":total_amount", $total_amount);
+                $stmt->bindParam(":xml_path", $xml_path);
                 $stmt->execute();
+
+                $invoice_id = $db->lastInsertId();
+
+                // Guardar los conceptos de la factura
+                foreach ($invoice_data['items'] as $item) {
+                    $product_key = $item['product_key'];
+                    $description = $item['description'];
+                    $quantity = $item['quantity'];
+                    $unit_price = $item['unit_price'];
+                    $subtotal = $item['subtotal'];
+                    $tax_amount = $item['tax_amount'];
+                    $total = $item['total'];
+
+                    $query = "INSERT INTO invoice_items (invoice_id, product_key, description, 
+                                                       quantity, unit_price, subtotal, 
+                                                       tax_amount, total) 
+                             VALUES (:invoice_id, :product_key, :description, 
+                                    :quantity, :unit_price, :subtotal, 
+                                    :tax_amount, :total)";
+                    $stmt = $db->prepare($query);
+                    $stmt->bindParam(":invoice_id", $invoice_id);
+                    $stmt->bindParam(":product_key", $product_key);
+                    $stmt->bindParam(":description", $description);
+                    $stmt->bindParam(":quantity", $quantity);
+                    $stmt->bindParam(":unit_price", $unit_price);
+                    $stmt->bindParam(":subtotal", $subtotal);
+                    $stmt->bindParam(":tax_amount", $tax_amount);
+                    $stmt->bindParam(":total", $total);
+                    $stmt->execute();
+                }
+
+                $success_count++;
             }
-
+  
             $db->commit();
-
-            // Obtener datos del cliente para la notificación
-            $query = "SELECT c.*, u.email 
-                     FROM clients c 
-                     JOIN users u ON u.id = c.user_id 
-                     WHERE c.id = :client_id";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(":client_id", $client_id);
-            $stmt->execute();
-            $client = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Enviar notificación por correo
-            $mailer = new Mailer();
-            $mailer->sendNewInvoiceNotification($client, [
-                'invoice_number' => $invoice_number,
-                'total_amount' => $invoice_data['total'],
-                'due_date' => $due_date,
-                'issue_date' => $issue_date
-            ]);
-
-            // Limpiar datos de la sesión
-            unset($_SESSION['invoice_data']);
-
-            $_SESSION['success'] = "Factura guardada exitosamente";
-            header("Location: view.php?id=" . $invoice_id);
+  
+            // Limpiar resultados de la sesión
+            unset($_SESSION['invoice_results']);
+  
+            $_SESSION['success'] = "Se guardaron $success_count facturas exitosamente";
+            header("Location: index.php");
             exit();
         }
     } catch (Exception $e) {
