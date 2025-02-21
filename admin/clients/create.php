@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Nombre/Razón Social
-            let businessName = text.match(/Nombre,\s*denominación\s*o\s*razón\s*social\s*(.*?)\s*(?:idCIF|$)/i);
+            let businessName = text.match(/Registro Federal de Contribuyentes\s+(.*?)\s+Nombre,\s*denominación/i);
             if (!businessName) {
                 // Intentar con formato de persona física
                 const nombre = text.match(/Nombre\s*\(s\):\s*(.*?)(?:Primer|$)/i);
@@ -387,6 +387,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     businessName = [null, nombreCompleto];
                 }
+            }
+            
+            // Si aún no se encuentra, intentar con otro formato común
+            if (!businessName) {
+                businessName = text.match(/CÉDULA DE IDENTIFICACIÓN FISCAL\s+[A-Z0-9]+\s+(.*?)\s+Nombre,/i);
             }
             
             // Código Postal
@@ -408,6 +413,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (businessName) {
                 document.getElementById('business_name').value = businessName[1].trim().toUpperCase();
                 console.log('Razón Social encontrada:', businessName[1]);
+            } else {
+                console.log('No se pudo encontrar la Razón Social en el documento');
             }
             if (cp) {
                 document.getElementById('zip_code').value = cp[1];
