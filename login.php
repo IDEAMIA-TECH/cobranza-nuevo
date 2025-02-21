@@ -10,13 +10,19 @@ require_once 'includes/Settings.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$query = "SELECT setting_value FROM system_settings WHERE setting_key IN ('company_name', 'company_logo')";
+$query = "SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('company_name', 'company_logo')";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$settings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$company_name = $settings['company_name'] ?? 'Sistema de Cobranza';
-$company_logo = $settings['company_logo'] ?? '/assets/img/default-logo.png';
+// Convertir el resultado en un array asociativo
+$config = [];
+foreach ($settings as $setting) {
+    $config[$setting['setting_key']] = $setting['setting_value'];
+}
+
+$company_name = $config['company_name'] ?? 'Sistema de Cobranza';
+$company_logo = $config['company_logo'] ?? '/assets/img/default-logo.png';
 
 if (isLoggedIn()) {
     header("Location: index.php");
