@@ -12,9 +12,15 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
 if (isLoggedIn()) {
     $database = new Database();
     $db = $database->getConnection();
-    $query = "SELECT a.avatar_path 
-              FROM admin_profiles a 
-              WHERE a.user_id = :user_id";
+    if (isAdmin()) {
+        $query = "SELECT a.avatar_path as profile_image 
+                  FROM admin_profiles a 
+                  WHERE a.user_id = :user_id";
+    } else {
+        $query = "SELECT c.company_logo as profile_image 
+                  FROM clients c 
+                  WHERE c.user_id = :user_id";
+    }
     $stmt = $db->prepare($query);
     $stmt->bindParam(":user_id", $_SESSION['user_id']);
     $stmt->execute();
@@ -278,8 +284,8 @@ if (isLoggedIn()) {
                 </a>
                 <?php if (isLoggedIn()): ?>
                     <div class="user-menu">
-                        <img src="<?php echo !empty($user_profile['avatar_path']) ? 
-                                       getBaseUrl() . $user_profile['avatar_path'] : 
+                        <img src="<?php echo !empty($user_profile['profile_image']) ? 
+                                       getBaseUrl() . $user_profile['profile_image'] : 
                                        getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
                               alt="Usuario" class="avatar">
                         <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
