@@ -34,7 +34,7 @@ include '../../includes/header.php';
         <h2>Gestión de Clientes</h2>
         <div class="header-actions">
             <a href="create.php" class="btn btn-success">
-                <i class="fas fa-plus"></i> Nuevo Cliente
+                <i class="fas fa-user-plus"></i> Nuevo Cliente
             </a>
             <a href="../dashboard.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
@@ -84,11 +84,11 @@ include '../../includes/header.php';
                         <div class="action-buttons">
                             <a href="view.php?id=<?php echo $client['id']; ?>" 
                                class="btn btn-sm btn-primary" title="Ver Detalles">
-                                <i class="fas fa-eye"></i>
+                                <i class="far fa-eye"></i>
                             </a>
                             <a href="edit.php?id=<?php echo $client['id']; ?>" 
                                class="btn btn-sm btn-warning" title="Editar">
-                                <i class="fas fa-edit"></i>
+                                <i class="far fa-edit"></i>
                             </a>
                             <?php if ($client['user_status'] === 'active'): ?>
                                 <button onclick="deactivateClient(<?php echo $client['id']; ?>)" 
@@ -125,6 +125,14 @@ function activateClient(clientId) {
 </script>
 
 <style>
+.btn i {
+    margin-right: 5px;
+}
+
+.btn-sm i {
+    margin-right: 0;
+}
+
 .invoice-stats {
     display: flex;
     gap: 10px;
