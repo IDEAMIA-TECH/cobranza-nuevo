@@ -627,6 +627,7 @@ textarea.form-control {
     color: #4a148c;
 }
 
+/* Mantener solo los estilos para enlaces blancos en tablas */
 .table a {
     color: #ffffff;
     text-decoration: none;
