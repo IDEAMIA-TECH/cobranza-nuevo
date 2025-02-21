@@ -138,7 +138,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $client_id = (int)$invoice_data['client_id'];
             $invoice_number = $invoice_data['invoice_number'];
             $issue_date = date('Y-m-d', strtotime($invoice_data['issue_date']));
-            $due_date = date('Y-m-d', strtotime($issue_date . ' + 15 days'));
+            $credit_days = $invoice_data['credit_days'] > 0 ? $invoice_data['credit_days'] : 0;
+            $due_date = date('Y-m-d', strtotime("+{$credit_days} days"));
 
             // Mover el archivo XML a la ubicación final
             $xml_directory = '../../uploads/xml/';

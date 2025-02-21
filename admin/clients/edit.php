@@ -67,10 +67,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
         
         // Actualizar información del cliente
+        $business_name = cleanInput($_POST['business_name']);
+        $rfc = cleanInput($_POST['rfc']);
+        $tax_regime = cleanInput($_POST['tax_regime']);
+        $credit_days = (int)$_POST['credit_days'];
+        $street = cleanInput($_POST['street']);
+        $ext_number = cleanInput($_POST['ext_number']);
+        $int_number = cleanInput($_POST['int_number']);
+        $neighborhood = cleanInput($_POST['neighborhood']);
+        $city = cleanInput($_POST['city']);
+        $state = cleanInput($_POST['state']);
+        $zip_code = cleanInput($_POST['zip_code']);
+        $phone = cleanInput($_POST['phone']);
+        
         $query = "UPDATE clients SET 
                     business_name = :business_name,
                     rfc = :rfc,
                     tax_regime = :tax_regime,
+                    credit_days = :credit_days,
                     street = :street,
                     ext_number = :ext_number,
                     int_number = :int_number,
@@ -82,24 +96,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                  WHERE id = :client_id";
         
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":business_name", $_POST['business_name']);
-        $stmt->bindParam(":rfc", $_POST['rfc']);
-        $stmt->bindParam(":tax_regime", $_POST['tax_regime']);
-        $stmt->bindParam(":street", $_POST['street']);
-        $stmt->bindParam(":ext_number", $_POST['ext_number']);
-        $stmt->bindParam(":int_number", $_POST['int_number']);
-        $stmt->bindParam(":neighborhood", $_POST['neighborhood']);
-        $stmt->bindParam(":city", $_POST['city']);
-        $stmt->bindParam(":state", $_POST['state']);
-        $stmt->bindParam(":zip_code", $_POST['zip_code']);
-        $stmt->bindParam(":phone", $_POST['phone']);
+        $stmt->bindParam(":business_name", $business_name);
+        $stmt->bindParam(":rfc", $rfc);
+        $stmt->bindParam(":tax_regime", $tax_regime);
+        $stmt->bindParam(":credit_days", $credit_days, PDO::PARAM_INT);
+        $stmt->bindParam(":street", $street);
+        $stmt->bindParam(":ext_number", $ext_number);
+        $stmt->bindParam(":int_number", $int_number);
+        $stmt->bindParam(":neighborhood", $neighborhood);
+        $stmt->bindParam(":city", $city);
+        $stmt->bindParam(":state", $state);
+        $stmt->bindParam(":zip_code", $zip_code);
+        $stmt->bindParam(":phone", $phone);
         $stmt->bindParam(":client_id", $client_id);
         $stmt->execute();
         
         // Registrar la actividad
         $query = "INSERT INTO activity_logs (user_id, action, description, ip_address) 
                  VALUES (:user_id, 'edit_client', :description, :ip_address)";
-        $description = "Actualizó la información del cliente: " . $_POST['business_name'];
+        $description = "Actualizó la información del cliente: " . $business_name;
         $stmt = $db->prepare($query);
         $stmt->bindParam(":user_id", $_SESSION['user_id']);
         $stmt->bindParam(":description", $description);
@@ -181,6 +196,21 @@ include '../../includes/header.php';
                     <label for="tax_regime">Régimen Fiscal:</label>
                     <input type="text" id="tax_regime" name="tax_regime" 
                            value="<?php echo htmlspecialchars($client['tax_regime']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="credit_days">Días de Crédito:</label>
+                    <select id="credit_days" name="credit_days" required>
+                        <option value="0" <?php echo $client['credit_days'] == 0 ? 'selected' : ''; ?>>Pago Inmediato</option>
+                        <option value="7" <?php echo $client['credit_days'] == 7 ? 'selected' : ''; ?>>7 días</option>
+                        <option value="15" <?php echo $client['credit_days'] == 15 ? 'selected' : ''; ?>>15 días</option>
+                        <option value="30" <?php echo $client['credit_days'] == 30 ? 'selected' : ''; ?>>30 días</option>
+                        <option value="45" <?php echo $client['credit_days'] == 45 ? 'selected' : ''; ?>>45 días</option>
+                        <option value="60" <?php echo $client['credit_days'] == 60 ? 'selected' : ''; ?>>60 días</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        Este valor determinará la fecha de vencimiento de las facturas
+                    </small>
                 </div>
             </div>
 

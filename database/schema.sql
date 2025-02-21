@@ -22,6 +22,7 @@ CREATE TABLE clients (
     company_logo VARCHAR(255) DEFAULT NULL,
     rfc VARCHAR(13) UNIQUE NOT NULL,
     tax_regime VARCHAR(100) NOT NULL,
+    credit_days INT NOT NULL DEFAULT 0 COMMENT 'Días de crédito para facturas',
     street VARCHAR(255) NOT NULL,
     ext_number VARCHAR(20) NOT NULL,
     int_number VARCHAR(20),

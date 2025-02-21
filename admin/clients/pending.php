@@ -52,6 +52,7 @@ include '../../includes/header.php';
                         <th>RFC</th>
                         <th>Email</th>
                         <th>Teléfono</th>
+                        <th>Días de Crédito</th>
                         <th>Fecha Registro</th>
                         <th>Acciones</th>
                     </tr>
@@ -63,6 +64,7 @@ include '../../includes/header.php';
                             <td><?php echo htmlspecialchars($client['rfc']); ?></td>
                             <td><?php echo htmlspecialchars($client['email']); ?></td>
                             <td><?php echo htmlspecialchars($client['phone']); ?></td>
+                            <td><?php echo htmlspecialchars($client['credit_days']); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($client['created_at'])); ?></td>
                             <td>
                                 <div class="action-buttons">
