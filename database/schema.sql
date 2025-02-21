@@ -174,4 +174,43 @@ CREATE TABLE admin_profiles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB; 
+) ENGINE=InnoDB;
+
+CREATE TABLE email_templates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    description TEXT,
+    variables TEXT,
+    type ENUM('new_invoice', 'payment_confirmation', 'due_reminder', 'overdue_notice') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Insertar plantillas por defecto
+INSERT INTO email_templates (name, subject, body, description, variables, type) VALUES
+('Nueva Factura', 
+ 'Nueva factura #{invoice_number}', 
+ '<p>Estimado {client_name},</p><p>Se ha generado una nueva factura con los siguientes detalles:</p><p>Número de factura: {invoice_number}<br>Monto: ${total_amount}<br>Fecha de vencimiento: {due_date}</p><p>Puede descargar su factura desde el siguiente enlace: {invoice_link}</p>',
+ 'Plantilla para notificar nuevas facturas',
+ '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","total_amount":"Monto total","due_date":"Fecha de vencimiento","invoice_link":"Enlace de la factura"}',
+ 'new_invoice'),
+('Confirmación de Pago',
+ 'Pago confirmado - Factura #{invoice_number}',
+ '<p>Estimado {client_name},</p><p>Su pago ha sido procesado correctamente:</p><p>Factura: {invoice_number}<br>Monto pagado: ${payment_amount}<br>Fecha de pago: {payment_date}</p>',
+ 'Plantilla para confirmar pagos recibidos',
+ '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","payment_amount":"Monto del pago","payment_date":"Fecha del pago"}',
+ 'payment_confirmation'),
+('Recordatorio de Vencimiento',
+ 'Recordatorio: Factura #{invoice_number} próxima a vencer',
+ '<p>Estimado {client_name},</p><p>Le recordamos que la factura #{invoice_number} vencerá en {days_to_due} días.</p><p>Detalles de la factura:<br>Monto pendiente: ${total_amount}<br>Fecha de vencimiento: {due_date}</p><p>Para evitar cargos adicionales, por favor realice el pago antes de la fecha de vencimiento.</p>',
+ 'Plantilla para recordatorios de facturas próximas a vencer',
+ '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","total_amount":"Monto total","due_date":"Fecha de vencimiento","days_to_due":"Días para vencer"}',
+ 'due_reminder'),
+('Factura Vencida',
+ 'IMPORTANTE: Factura #{invoice_number} vencida',
+ '<p>Estimado {client_name},</p><p>La factura #{invoice_number} se encuentra vencida por {days_overdue} días.</p><p>Detalles de la factura:<br>Monto pendiente: ${total_amount}<br>Fecha de vencimiento: {due_date}</p><p>Para regularizar su situación y evitar inconvenientes, por favor realice el pago lo antes posible.</p><p>Si ya realizó el pago, por favor ignore este mensaje.</p>',
+ 'Plantilla para notificación de facturas vencidas',
+ '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","total_amount":"Monto total","due_date":"Fecha de vencimiento","days_overdue":"Días de vencimiento"}',
+ 'overdue_notice'); 
