@@ -76,6 +76,9 @@ include '../includes/header.php';
             <a href="clients/index.php" class="btn btn-primary">
                 <i class="fas fa-users"></i> Ver Todos los Clientes
             </a>
+            <a href="email_logs/index.php" class="btn btn-info">
+                <i class="fas fa-envelope"></i> Historial de Correos
+            </a>
         </div>
     </div>
 
