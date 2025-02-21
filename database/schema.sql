@@ -14,6 +14,7 @@ CREATE TABLE clients (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     business_name VARCHAR(255) NOT NULL,
+    company_logo VARCHAR(255) DEFAULT NULL,
     rfc VARCHAR(13) UNIQUE NOT NULL,
     tax_regime VARCHAR(100) NOT NULL,
     street VARCHAR(255) NOT NULL,
