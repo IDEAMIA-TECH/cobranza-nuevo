@@ -6,6 +6,18 @@ require_once 'includes/functions.php';
 require_once 'config/database.php';
 require_once 'includes/Settings.php';
 
+// Obtener configuración del sistema
+$database = new Database();
+$db = $database->getConnection();
+
+$query = "SELECT setting_value FROM system_settings WHERE setting_key IN ('company_name', 'company_logo')";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$settings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$company_name = $settings['company_name'] ?? 'Sistema de Cobranza';
+$company_logo = $settings['company_logo'] ?? '/assets/img/default-logo.png';
+
 if (isLoggedIn()) {
     header("Location: index.php");
     exit();
@@ -98,7 +110,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Sistema de Cobranza</title>
+    <title>Iniciar Sesión - <?php echo htmlspecialchars($company_name); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?php echo getBaseUrl(); ?>/assets/css/styles.css">
     <style>
@@ -122,12 +134,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         .logo-section {
             margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .logo-section img {
             max-width: 120px;
             height: auto;
             margin-bottom: 1rem;
+            object-fit: contain;
+        }
+
+        .logo-section h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
         }
 
         .login-card {
@@ -228,8 +251,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
     <div class="login-container">
         <div class="logo-section">
-            <img src="<?php echo getBaseUrl(); ?>/assets/img/logo.png" 
-                 alt="Sistema de Cobranza">
+            <img src="<?php echo getBaseUrl() . $company_logo; ?>" 
+                 alt="<?php echo htmlspecialchars($company_name); ?>">
+            <h1><?php echo htmlspecialchars($company_name); ?></h1>
         </div>
 
         <div class="login-card">
