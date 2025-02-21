@@ -73,6 +73,9 @@ include '../includes/header.php';
             <a href="<?php echo getBaseUrl(); ?>/admin/invoices/create.php" class="btn btn-secondary">
                 <i class="fas fa-file-invoice"></i> Nueva Factura
             </a>
+            <a href="clients/index.php" class="btn btn-primary">
+                <i class="fas fa-users"></i> Ver Todos los Clientes
+            </a>
         </div>
     </div>
 
