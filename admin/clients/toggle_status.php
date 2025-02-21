@@ -10,7 +10,7 @@ redirectIfNotAdmin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Validar CSRF
-        if (!isset($_POST['csrf_token']) || !SecurityHelper::validateCSRFToken($_POST['csrf_token'])) {
+        if (!isset($_POST['csrf_token']) || !SecurityHelper::validateCSRF($_POST['csrf_token'])) {
             throw new Exception('Error de validación de seguridad');
         }
 

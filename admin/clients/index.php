@@ -91,10 +91,10 @@ include '../../includes/header.php';
                             <form method="POST" action="toggle_status.php" class="d-inline" onsubmit="return confirm('¿Está seguro de cambiar el estado del cliente?');">
                                 <?php echo SecurityHelper::getCSRFTokenField(); ?>
                                 <input type="hidden" name="client_id" value="<?php echo $client['id']; ?>">
-                                <input type="hidden" name="current_status" value="<?php echo $client['status']; ?>">
-                                <button type="submit" class="btn btn-small <?php echo $client['status'] === 'active' ? 'btn-danger' : 'btn-success'; ?>">
-                                    <i class="fas <?php echo $client['status'] === 'active' ? 'fa-ban' : 'fa-check'; ?>"></i>
-                                    <?php echo $client['status'] === 'active' ? 'Desactivar' : 'Activar'; ?>
+                                <input type="hidden" name="current_status" value="<?php echo $client['user_status']; ?>">
+                                <button type="submit" class="btn btn-small <?php echo $client['user_status'] === 'active' ? 'btn-danger' : 'btn-success'; ?>">
+                                    <i class="fas <?php echo $client['user_status'] === 'active' ? 'fa-ban' : 'fa-check'; ?>"></i>
+                                    <?php echo $client['user_status'] === 'active' ? 'Desactivar' : 'Activar'; ?>
                                 </button>
                             </form>
                         </div>
