@@ -1,3 +1,8 @@
+-- Establecer codificación por defecto
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+ALTER DATABASE cobranza1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
 -- Tabla de usuarios
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -7,7 +12,7 @@ CREATE TABLE users (
     status ENUM('active', 'pending', 'inactive') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de clientes
 CREATE TABLE clients (
@@ -29,7 +34,7 @@ CREATE TABLE clients (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de facturas
 CREATE TABLE invoices (
@@ -46,7 +51,7 @@ CREATE TABLE invoices (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de items de factura
 CREATE TABLE invoice_items (
@@ -61,7 +66,7 @@ CREATE TABLE invoice_items (
     total DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de pagos
 CREATE TABLE payments (
@@ -80,7 +85,7 @@ CREATE TABLE payments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de notificaciones
 CREATE TABLE notifications (
@@ -93,7 +98,7 @@ CREATE TABLE notifications (
     status ENUM('sent', 'failed', 'pending') NOT NULL DEFAULT 'pending',
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de registro de actividades
 CREATE TABLE activity_logs (
@@ -106,7 +111,7 @@ CREATE TABLE activity_logs (
     related_id INT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (related_id) REFERENCES clients(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla para restablecimiento de contraseñas
 CREATE TABLE password_resets (
@@ -117,7 +122,7 @@ CREATE TABLE password_resets (
     used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Crear usuario administrador por defecto
 -- Contraseña: Admin123!
@@ -142,7 +147,7 @@ CREATE TABLE email_logs (
     status ENUM('sent', 'failed') NOT NULL DEFAULT 'sent',
     error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE system_settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -150,7 +155,7 @@ CREATE TABLE system_settings (
     setting_value TEXT NOT NULL,
     setting_description VARCHAR(255),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar configuraciones por defecto
 INSERT INTO system_settings (setting_key, setting_value, setting_description) VALUES
@@ -174,7 +179,7 @@ CREATE TABLE admin_profiles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE email_templates (
     id INT PRIMARY KEY AUTO_INCREMENT,

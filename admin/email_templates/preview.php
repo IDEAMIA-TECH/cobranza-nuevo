@@ -45,6 +45,10 @@ $preview_data = [
 $subject = $template['subject'];
 $body = $template['body'];
 
+// Asegurar que el contenido está en UTF-8
+$subject = mb_convert_encoding($subject, 'UTF-8', 'UTF-8');
+$body = mb_convert_encoding($body, 'UTF-8', 'UTF-8');
+
 $variables = json_decode($template['variables'], true);
 foreach ($variables as $key => $description) {
     $subject = str_replace('{' . $key . '}', $preview_data[$key] ?? '[' . $key . ']', $subject);

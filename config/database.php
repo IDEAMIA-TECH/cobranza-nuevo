@@ -11,9 +11,10 @@ class Database {
 
         try {
             $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
                 $this->username,
-                $this->password
+                $this->password,
+                [PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"]
             );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch(PDOException $e) {
