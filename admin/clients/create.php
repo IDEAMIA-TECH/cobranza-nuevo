@@ -22,6 +22,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $db = $database->getConnection();
         $db->beginTransaction();
         
+        // Procesar archivo CSF si fue subido
+        $csf_file_path = null;
+        if (isset($_FILES['csf_file']) && $_FILES['csf_file']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['csf_file'];
+            $fileName = $file['name'];
+            $fileType = $file['type'];
+            
+            // Validar que sea un PDF
+            if (!in_array($fileType, ['application/pdf', 'application/x-pdf'])) {
+                throw new Exception('El archivo debe ser un PDF');
+            }
+            
+            // Validar tamaño (máximo 5MB)
+            if ($file['size'] > 5 * 1024 * 1024) {
+                throw new Exception('El archivo no debe superar los 5MB');
+            }
+            
+            // Generar nombre único
+            $uniqueName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $fileName);
+            $uploadDir = '../../uploads/csf/';
+            
+            // Crear directorio si no existe
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            // Mover archivo
+            if (move_uploaded_file($file['tmp_name'], $uploadDir . $uniqueName)) {
+                $csf_file_path = 'uploads/csf/' . $uniqueName;
+            } else {
+                throw new Exception('Error al guardar el archivo CSF');
+            }
+        }
+        
         // Convertir todos los datos a mayúsculas
         $email = strtoupper(cleanInput($_POST['email']));
         $password = $_POST['password']; // La contraseña no se convierte a mayúsculas
@@ -101,15 +135,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user_id = $db->lastInsertId();
         
         // Crear cliente
-        $query = "INSERT INTO clients (user_id, business_name, rfc, tax_regime, street, ext_number, 
+        $query = "INSERT INTO clients (user_id, business_name, rfc, tax_regime, csf_file_path, street, ext_number, 
                                      int_number, neighborhood, city, state, zip_code, phone, contact_name) 
-                  VALUES (:user_id, :business_name, :rfc, :tax_regime, :street, :ext_number, 
+                  VALUES (:user_id, :business_name, :rfc, :tax_regime, :csf_file_path, :street, :ext_number, 
                          :int_number, :neighborhood, :city, :state, :zip_code, :phone, :contact_name)";
         $stmt = $db->prepare($query);
         $stmt->bindParam(":user_id", $user_id);
         $stmt->bindParam(":business_name", $business_name);
         $stmt->bindParam(":rfc", $rfc);
         $stmt->bindParam(":tax_regime", $tax_regime);
+        $stmt->bindParam(":csf_file_path", $csf_file_path);
         $stmt->bindParam(":street", $street);
         $stmt->bindParam(":ext_number", $ext_number);
         $stmt->bindParam(":int_number", $int_number);
@@ -162,7 +197,7 @@ include '../../includes/header.php';
         <div class="alert alert-error"><?php echo $error; ?></div>
     <?php endif; ?>
 
-    <form method="POST" class="edit-form">
+    <form method="POST" class="edit-form" enctype="multipart/form-data">
         <?php echo SecurityHelper::getCSRFTokenField(); ?>
         
         <div class="form-sections">
