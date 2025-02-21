@@ -7,6 +7,19 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
     return;
 }
+
+// Obtener avatar del usuario si está logueado
+if (isLoggedIn()) {
+    $database = new Database();
+    $db = $database->getConnection();
+    $query = "SELECT a.avatar_path 
+              FROM admin_profiles a 
+              WHERE a.user_id = :user_id";
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(":user_id", $_SESSION['user_id']);
+    $stmt->execute();
+    $user_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -191,6 +204,50 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
             color: #fff;
             white-space: nowrap;
         }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-icon {
+            color: white;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .nav-icon:hover {
+            opacity: 1;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .user-menu:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .user-menu .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #fff;
+        }
+
+        .user-menu span {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -221,9 +278,11 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                 </a>
                 <?php if (isLoggedIn()): ?>
                     <div class="user-menu">
-                        <img src="<?php echo getBaseUrl(); ?>/assets/img/default-avatar.png" 
-                             alt="Usuario" class="avatar">
-                        <span><?php echo $_SESSION['user_name']; ?></span>
+                        <img src="<?php echo !empty($user_profile['avatar_path']) ? 
+                                       getBaseUrl() . $user_profile['avatar_path'] : 
+                                       getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
+                              alt="Usuario" class="avatar">
+                        <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
                     </div>
                 <?php endif; ?>
             </div>
