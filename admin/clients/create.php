@@ -220,22 +220,25 @@ include '../../includes/header.php';
                         <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
                         <option value="606">606 - Arrendamiento</option>
                         <option value="607">607 - Régimen de Enajenación o Adquisición de Bienes</option>
-                        <option value="608">608 - Demás ingresos</option>
+                        <option value="608">608 - Demás Ingresos</option>
                         <option value="609">609 - Consolidación</option>
                         <option value="610">610 - Residentes en el Extranjero sin Establecimiento Permanente en México</option>
-                        <option value="611">611 - Ingresos por Dividendos (socios y accionistas)</option>
+                        <option value="611">611 - Ingresos por Dividendos (Socios y Accionistas)</option>
                         <option value="612">612 - Personas Físicas con Actividades Empresariales y Profesionales</option>
-                        <option value="614">614 - Ingresos por intereses</option>
-                        <option value="615">615 - Régimen de los ingresos por obtención de premios</option>
-                        <option value="616">616 - Sin obligaciones fiscales</option>
-                        <option value="620">620 - Sociedades Cooperativas de Producción que optan por diferir sus ingresos</option>
+                        <option value="614">614 - Ingresos por Intereses</option>
+                        <option value="615">615 - Régimen de los Ingresos por Obtención de Premios</option>
+                        <option value="616">616 - Sin Obligaciones Fiscales</option>
+                        <option value="620">620 - Sociedades Cooperativas de Producción que Optan por Diferir sus Ingresos</option>
                         <option value="621">621 - Incorporación Fiscal</option>
                         <option value="622">622 - Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras</option>
                         <option value="623">623 - Opcional para Grupos de Sociedades</option>
                         <option value="624">624 - Coordinados</option>
-                        <option value="625">625 - Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas</option>
+                        <option value="625">625 - Régimen de las Actividades Empresariales con Ingresos a través de Plataformas Tecnológicas</option>
                         <option value="626">626 - Régimen Simplificado de Confianza</option>
                     </select>
+                    <small class="form-text text-muted">
+                        Seleccione el régimen fiscal que corresponda según la Constancia de Situación Fiscal
+                    </small>
                 </div>
             </div>
 
@@ -405,6 +408,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const ciudad = text.match(/Nombre\s*del\s*Municipio[^:]*:\s*(.*?)(?:Nombre|$)/i);
             const estado = text.match(/Nombre\s*de\s*la\s*Entidad\s*Federativa:\s*(.*?)(?:\s|$)/i);
             
+            // Régimen Fiscal
+            let regimen = text.match(/Régimen\s*Fiscal:\s*(\d{3})\s*-?\s*([^,\n]*)/i);
+            if (!regimen) {
+                // Intentar otros formatos comunes
+                regimen = text.match(/RÉGIMEN:\s*(\d{3})\s*-?\s*([^,\n]*)/i);
+            }
+            
             // Autocompletar campos
             if (rfc) {
                 document.getElementById('rfc').value = rfc[1].toUpperCase();
@@ -413,8 +423,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (businessName) {
                 document.getElementById('business_name').value = businessName[1].trim().toUpperCase();
                 console.log('Razón Social encontrada:', businessName[1]);
-            } else {
-                console.log('No se pudo encontrar la Razón Social en el documento');
+            }
+            if (regimen) {
+                const regimenSelect = document.getElementById('tax_regime');
+                const regimenCode = regimen[1];
+                console.log('Régimen encontrado:', regimenCode, regimen[2]);
+                
+                // Buscar y seleccionar la opción correcta en el select
+                for (let option of regimenSelect.options) {
+                    if (option.value === regimenCode) {
+                        option.selected = true;
+                        break;
+                    }
+                }
             }
             if (cp) {
                 document.getElementById('zip_code').value = cp[1];
