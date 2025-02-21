@@ -333,38 +333,67 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingIndicator = document.getElementById('loading_csf');
     
     // Cargar worker de PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.js';
     
     csfInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
         
+        // Validar tipo de archivo
+        if (file.type !== 'application/pdf') {
+            alert('Por favor, seleccione un archivo PDF válido');
+            csfInput.value = '';
+            return;
+        }
+        
         loadingIndicator.style.display = 'block';
         
         try {
             // Leer el archivo PDF
-            const arrayBuffer = await file.arrayBuffer();
+            const arrayBuffer = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsArrayBuffer(file);
+            });
+            
             const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
             const page = await pdf.getPage(1);
             const textContent = await page.getTextContent();
             const text = textContent.items.map(item => item.str).join(' ');
             
+            console.log('Texto extraído:', text); // Para debug
+            
             // Extraer información usando expresiones regulares
-            const rfc = text.match(/RFC:\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/);
-            const businessName = text.match(/DENOMINACIÓN\/RAZÓN SOCIAL:\s*(.*?)\s*(?:RFC|$)/i);
-            const regimen = text.match(/RÉGIMEN.*?:\s*(.*?)\s*(?:DOMICILIO|$)/i);
-            const cp = text.match(/C\.?P\.?:\s*(\d{5})/);
+            const rfc = text.match(/RFC:?\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/i);
+            const businessName = text.match(/(?:DENOMINACIÓN|RAZÓN SOCIAL|NOMBRE):\s*(.*?)(?:\s+RFC|$)/i);
+            const regimen = text.match(/RÉGIMEN.*?:\s*(\d{3}\s*-\s*[^,\n]*)/i);
+            const cp = text.match(/C\.?P\.?:?\s*(\d{5})/i);
             
             // Autocompletar campos
-            if (rfc) document.getElementById('rfc').value = rfc[1];
-            if (businessName) document.getElementById('business_name').value = businessName[1].trim();
-            if (regimen) document.getElementById('tax_regime').value = regimen[1].trim();
-            if (cp) document.getElementById('zip_code').value = cp[1];
+            if (rfc) {
+                document.getElementById('rfc').value = rfc[1].toUpperCase();
+                console.log('RFC encontrado:', rfc[1]);
+            }
+            if (businessName) {
+                document.getElementById('business_name').value = businessName[1].trim().toUpperCase();
+                console.log('Razón Social encontrada:', businessName[1]);
+            }
+            if (regimen) {
+                const regimenCode = regimen[1].match(/(\d{3})/)[1];
+                document.getElementById('tax_regime').value = regimenCode;
+                console.log('Régimen encontrado:', regimen[1], 'Código:', regimenCode);
+            }
+            if (cp) {
+                document.getElementById('zip_code').value = cp[1];
+                console.log('CP encontrado:', cp[1]);
+            }
             
             // Guardar el archivo
             const formData = new FormData();
             formData.append('csf_file', file);
             formData.append('action', 'upload_csf');
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
             
             const response = await fetch('process_csf.php', {
                 method: 'POST',
@@ -378,7 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error procesando CSF:', error);
-            alert('Error al procesar el documento. Por favor, verifique que sea un PDF válido.');
+            alert('Error al procesar el documento: ' + error.message);
+            csfInput.value = '';
         } finally {
             loadingIndicator.style.display = 'none';
         }
