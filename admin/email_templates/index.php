@@ -1,6 +1,7 @@
 <?php
 require_once '../../includes/functions.php';
 require_once '../../config/database.php';
+header('Content-Type: text/html; charset=utf-8');
 
 // Verificar si el usuario está logueado y es administrador
 redirectIfNotLoggedIn();
@@ -50,7 +51,7 @@ include '../../includes/header.php';
                     <strong>Asunto:</strong> <?php echo htmlspecialchars($template['subject']); ?>
                 </div>
                 <div class="template-description">
-                    <?php echo htmlspecialchars($template['description']); ?>
+                    <?php echo htmlspecialchars($template['description'], ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <div class="template-actions">
                     <a href="edit.php?id=<?php echo $template['id']; ?>" class="btn btn-small">

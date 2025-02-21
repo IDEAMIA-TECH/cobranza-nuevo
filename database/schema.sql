@@ -186,7 +186,7 @@ CREATE TABLE email_templates (
     type ENUM('new_invoice', 'payment_confirmation', 'due_reminder', 'overdue_notice') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar plantillas por defecto
 INSERT INTO email_templates (name, subject, body, description, variables, type) VALUES

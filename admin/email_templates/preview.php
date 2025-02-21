@@ -1,6 +1,7 @@
 <?php
 require_once '../../includes/functions.php';
 require_once '../../config/database.php';
+header('Content-Type: text/html; charset=utf-8');
 
 // Verificar si el usuario está logueado y es administrador
 redirectIfNotLoggedIn();
@@ -84,7 +85,7 @@ include '../../includes/header.php';
             </div>
             
             <div class="email-body">
-                <?php echo $body; ?>
+                <?php echo html_entity_decode($body, ENT_QUOTES | ENT_HTML5, 'UTF-8'); ?>
             </div>
         </div>
 
