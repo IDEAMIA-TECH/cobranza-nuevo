@@ -77,41 +77,73 @@ function parseInvoiceXML($xml_content) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Procesar archivo XML si fue subido
-        if (isset($_FILES['xml_file']) && $_FILES['xml_file']['error'] === UPLOAD_ERR_OK) {
-            $xml_content = file_get_contents($_FILES['xml_file']['tmp_name']);
-            $invoice_data = parseInvoiceXML($xml_content);
-
-            // Verificar si el cliente existe
-            $query = "SELECT c.id, c.business_name 
-                     FROM clients c 
-                     JOIN users u ON u.id = c.user_id 
-                     WHERE c.rfc = :rfc AND u.status = 'active'";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(":rfc", $invoice_data['client_rfc']);
-            $stmt->execute();
-
-            if ($stmt->rowCount() === 0) {
-                throw new Exception("No se encontró un cliente activo con el RFC: " . $invoice_data['client_rfc']);
-            }
-
-            $client = $stmt->fetch(PDO::FETCH_ASSOC);
-            $invoice_data['client_id'] = $client['id'];
-            $invoice_data['client_name'] = $client['business_name'];
-
-            // Guardar el archivo XML temporalmente
+        // Procesar archivos XML si fueron subidos
+        if (isset($_FILES['xml_files'])) {
+            $results = [];
             $temp_xml_directory = '../../uploads/temp/';
             if (!file_exists($temp_xml_directory)) {
                 mkdir($temp_xml_directory, 0755, true);
             }
-            $xml_filename = $invoice_data['uuid'] . '.xml';
-            move_uploaded_file($_FILES['xml_file']['tmp_name'], $temp_xml_directory . $xml_filename);
-            $invoice_data['xml_path'] = 'uploads/temp/' . $xml_filename;
 
-            // Guardar datos en la sesión
-            $_SESSION['invoice_data'] = $invoice_data;
+            // Procesar cada archivo
+            foreach ($_FILES['xml_files']['tmp_name'] as $key => $tmp_name) {
+                $result = [
+                    'filename' => $_FILES['xml_files']['name'][$key],
+                    'status' => 'error',
+                    'message' => '',
+                    'data' => null
+                ];
 
-            $success = "XML procesado correctamente. Por favor, verifique los datos y complete la información adicional.";
+                try {
+                    if ($_FILES['xml_files']['error'][$key] === UPLOAD_ERR_OK) {
+                        $xml_content = file_get_contents($tmp_name);
+                        $invoice_data = parseInvoiceXML($xml_content);
+
+                        // Verificar si el cliente existe
+                        $query = "SELECT c.id, c.business_name, c.credit_days 
+                                 FROM clients c 
+                                 JOIN users u ON u.id = c.user_id 
+                                 WHERE c.rfc = :rfc AND u.status = 'active'";
+                        $stmt = $db->prepare($query);
+                        $stmt->bindParam(":rfc", $invoice_data['client_rfc']);
+                        $stmt->execute();
+
+                        if ($stmt->rowCount() === 0) {
+                            throw new Exception("No se encontró un cliente activo con el RFC: " . $invoice_data['client_rfc']);
+                        }
+
+                        $client = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $invoice_data['client_id'] = $client['id'];
+                        $invoice_data['client_name'] = $client['business_name'];
+                        $invoice_data['credit_days'] = $client['credit_days'];
+
+                        // Guardar el archivo XML
+                        $xml_filename = $invoice_data['uuid'] . '.xml';
+                        move_uploaded_file($tmp_name, $temp_xml_directory . $xml_filename);
+                        $invoice_data['xml_path'] = 'uploads/temp/' . $xml_filename;
+
+                        $result['status'] = 'success';
+                        $result['message'] = 'XML procesado correctamente';
+                        $result['data'] = $invoice_data;
+                    }
+                } catch (Exception $e) {
+                    $result['message'] = $e->getMessage();
+                }
+
+                $results[] = $result;
+            }
+
+            // Devolver resultados en formato JSON si es una petición AJAX
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['results' => $results]);
+                exit;
+            }
+
+            // Almacenar resultados en la sesión
+            $_SESSION['invoice_results'] = $results;
+            $success = "Se procesaron " . count($results) . " archivos XML";
         }
 
         // Si se envió el formulario completo
@@ -266,13 +298,37 @@ include '../../includes/header.php';
         <form method="POST" enctype="multipart/form-data" class="upload-form">
             <?php echo SecurityHelper::getCSRFTokenField(); ?>
             <div class="form-group">
-                <label for="xml_file">Archivo XML de la factura:</label>
-                <input type="file" id="xml_file" name="xml_file" accept=".xml" required>
+                <label for="xml_files">Archivos XML de facturas:</label>
+                <input type="file" id="xml_files" name="xml_files[]" accept=".xml" multiple required>
+                <small class="form-text text-muted">
+                    Puede seleccionar múltiples archivos XML a la vez
+                </small>
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-upload"></i> Procesar XML
             </button>
         </form>
+    </div>
+
+    <!-- Tabla de resultados del procesamiento -->
+    <div id="processing-results" class="processing-results" style="display: none;">
+        <h3>Resultados del Procesamiento</h3>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Archivo</th>
+                        <th>Cliente</th>
+                        <th>Factura</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Formulario principal de la factura -->
