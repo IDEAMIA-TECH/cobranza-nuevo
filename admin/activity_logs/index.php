@@ -63,7 +63,7 @@ $total_records = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 $total_pages = ceil($total_records / $per_page);
 
 // Agregar ordenamiento y límites
-$query .= " ORDER BY al.created_at DESC LIMIT :offset, :per_page";
+$query .= " ORDER BY al.created_at DESC LIMIT ? OFFSET ?";
 $params[':offset'] = $offset;
 $params[':per_page'] = $per_page;
 
