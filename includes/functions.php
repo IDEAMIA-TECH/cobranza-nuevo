@@ -15,9 +15,16 @@ function isAdmin() {
     return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 }
 
+function redirectIfNotAdmin() {
+    if (!isAdmin()) {
+        header("Location: " . getBaseUrl() . "/index.php");
+        exit();
+    }
+}
+
 function redirectIfNotLoggedIn() {
-    if (!isset($_SESSION['user_id']) || !SecurityHelper::validateSession()) {
-        header("Location: /login.php");
+    if (!isLoggedIn()) {
+        header("Location: " . getBaseUrl() . "/login.php");
         exit();
     }
 }
