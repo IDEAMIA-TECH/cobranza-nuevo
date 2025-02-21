@@ -247,6 +247,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt->execute();
                 }
 
+                // Enviar notificación por correo al cliente después de guardar cada factura
+                try {
+                    // Obtener datos completos del cliente
+                    $query = "SELECT c.*, u.email 
+                             FROM clients c 
+                             JOIN users u ON c.user_id = u.id 
+                             WHERE c.id = :client_id";
+                    $stmt = $db->prepare($query);
+                    $stmt->bindParam(':client_id', $client_id);
+                    $stmt->execute();
+                    $client_data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($client_data) {
+                        $mailer = new Mailer();
+                        $mailer->sendNewInvoiceNotification($client_data, [
+                            'invoice_number' => $invoice_number,
+                            'total_amount' => $total_amount,
+                            'due_date' => $due_date,
+                            'issue_date' => $issue_date,
+                            'invoice_id' => $invoice_id
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    // Loguear el error pero no detener el proceso
+                    error_log("Error enviando correo de factura {$invoice_number}: " . $e->getMessage());
+                }
+  
                 $success_count++;
             }
   
@@ -254,34 +281,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   
             // Limpiar resultados de la sesión
             unset($_SESSION['invoice_results']);
-  
-            // Enviar notificación por correo al cliente
-            try {
-                $mailer = new Mailer();
-                // Obtener datos del cliente
-                $query = "SELECT c.*, u.email 
-                         FROM clients c 
-                         JOIN users u ON c.user_id = u.id 
-                         WHERE c.id = :client_id";
-                $stmt = $db->prepare($query);
-                $stmt->bindParam(':client_id', $client_id);
-                $stmt->execute();
-                $client_data = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if (!$client_data) {
-                    throw new Exception('No se encontraron los datos del cliente');
-                }
-
-                $mailer->sendNewInvoiceNotification($client_data, [
-                    'invoice_number' => $invoice_number,
-                    'total_amount' => $total_amount,
-                    'due_date' => $due_date,
-                    'issue_date' => $issue_date
-                ]);
-            } catch (Exception $e) {
-                // Loguear el error pero no detener el proceso
-                error_log("Error enviando correo de nueva factura: " . $e->getMessage());
-            }
   
             $_SESSION['success'] = "Se guardaron $success_count facturas exitosamente";
             header("Location: index.php");

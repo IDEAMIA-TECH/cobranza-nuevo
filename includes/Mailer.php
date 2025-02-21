@@ -38,7 +38,10 @@ class Mailer {
         try {
             // Validar datos requeridos
             if (empty($client['email']) || empty($client['business_name'])) {
-                throw new Exception('Datos de cliente incompletos para enviar correo');
+                error_log("Datos de cliente incompletos para enviar correo: " . 
+                         "email=" . ($client['email'] ?? 'vacío') . 
+                         ", nombre=" . ($client['business_name'] ?? 'vacío'));
+                return false;
             }
 
             // Limpiar destinatarios anteriores
@@ -51,10 +54,15 @@ class Mailer {
             $template = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$template) {
-                throw new Exception('Plantilla de correo no encontrada');
+                error_log("Plantilla de correo 'new_invoice' no encontrada");
+                return false;
             }
             
             $this->mail->addAddress($client['email'], $client['business_name']);
+            
+            // Registrar intento de envío
+            error_log("Intentando enviar correo a {$client['email']} para factura {$invoice['invoice_number']}");
+            
             $this->mail->Subject = str_replace(
                 ['{invoice_number}'],
                 [$invoice['invoice_number']],
