@@ -4,6 +4,7 @@ ob_start();
 
 require_once 'includes/functions.php';
 require_once 'config/database.php';
+require_once 'includes/Settings.php';
 
 if (isLoggedIn()) {
     header("Location: index.php");
@@ -97,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - <?php echo Settings::get('system_name', 'Sistema de Cobranza'); ?></title>
+    <title>Iniciar Sesión - Sistema de Cobranza</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?php echo getBaseUrl(); ?>/assets/css/styles.css">
     <style>
@@ -227,10 +228,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
     <div class="login-container">
         <div class="logo-section">
-            <?php if ($logo = Settings::get('company_logo')): ?>
-                <img src="<?php echo getBaseUrl() . $logo; ?>" 
-                     alt="<?php echo Settings::get('company_name'); ?>">
-            <?php endif; ?>
+            <img src="<?php echo getBaseUrl(); ?>/assets/img/logo.png" 
+                 alt="Sistema de Cobranza">
         </div>
 
         <div class="login-card">
