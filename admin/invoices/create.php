@@ -258,7 +258,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Enviar notificación por correo al cliente
             try {
                 $mailer = new Mailer();
-                $mailer->sendNewInvoiceNotification($client, [
+                // Obtener datos del cliente
+                $query = "SELECT c.*, u.email 
+                         FROM clients c 
+                         JOIN users u ON c.user_id = u.id 
+                         WHERE c.id = :client_id";
+                $stmt = $db->prepare($query);
+                $stmt->bindParam(':client_id', $client_id);
+                $stmt->execute();
+                $client_data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$client_data) {
+                    throw new Exception('No se encontraron los datos del cliente');
+                }
+
+                $mailer->sendNewInvoiceNotification($client_data, [
                     'invoice_number' => $invoice_number,
                     'total_amount' => $total_amount,
                     'due_date' => $due_date,

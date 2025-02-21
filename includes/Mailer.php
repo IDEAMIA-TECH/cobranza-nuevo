@@ -36,6 +36,14 @@ class Mailer {
     
     public function sendNewInvoiceNotification($client, $invoice) {
         try {
+            // Validar datos requeridos
+            if (empty($client['email']) || empty($client['business_name'])) {
+                throw new Exception('Datos de cliente incompletos para enviar correo');
+            }
+
+            // Limpiar destinatarios anteriores
+            $this->mail->clearAddresses();
+            
             // Obtener la plantilla de correo
             $query = "SELECT * FROM email_templates WHERE type = 'new_invoice' LIMIT 1";
             $stmt = $this->db->prepare($query);
@@ -80,7 +88,7 @@ class Mailer {
             }
             
         } catch (Exception $e) {
-            error_log("Error enviando correo: " . $e->getMessage());
+            error_log("Error enviando correo a {$client['email']}: " . $e->getMessage());
             return false;
         }
     }
@@ -386,23 +394,42 @@ class Mailer {
     
     private function logEmail($recipient, $subject, $type, $related_id = null, $status = 'sent', $error = null) {
         try {
+            // Validar que tengamos los datos necesarios
+            if (empty($recipient['email'])) {
+                throw new Exception('Email del destinatario es requerido');
+            }
+
+            // Asegurar que tengamos una conexión a la base de datos
+            if (!$this->db) {
+                $database = new Database();
+                $this->db = $database->getConnection();
+            }
+
             $query = "INSERT INTO email_logs 
-                     (recipient_email, recipient_name, subject, email_type, related_id, status, error_message) 
+                     (recipient_email, recipient_name, subject, email_type, related_id, status, error_message, created_at) 
                      VALUES 
-                     (:email, :name, :subject, :type, :related_id, :status, :error)";
+                     (:email, :name, :subject, :type, :related_id, :status, :error, NOW())";
             
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':email', $recipient['email']);
-            $stmt->bindParam(':name', $recipient['name']);
+            $stmt->bindParam(':email', $recipient['email'], PDO::PARAM_STR);
+            $stmt->bindParam(':name', $recipient['name'] ?? '', PDO::PARAM_STR);
             $stmt->bindParam(':subject', $subject);
             $stmt->bindParam(':type', $type);
-            $stmt->bindParam(':related_id', $related_id);
+            $stmt->bindParam(':related_id', $related_id, PDO::PARAM_STR);
             $stmt->bindParam(':status', $status);
             $stmt->bindParam(':error', $error);
             
-            return $stmt->execute();
+            $result = $stmt->execute();
+            
+            if (!$result) {
+                throw new Exception('Error al guardar el log de correo');
+            }
+            
+            return true;
         } catch (Exception $e) {
-            error_log("Error logging email: " . $e->getMessage());
+            error_log("Error al registrar correo en logs: " . $e->getMessage() . 
+                     " - Destinatario: " . ($recipient['email'] ?? 'no email') . 
+                     " - Tipo: " . $type);
             return false;
         }
     }
