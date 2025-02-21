@@ -347,6 +347,11 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
+                    <a href="<?php echo getBaseUrl(); ?>/admin/email_templates/">
+                        <i class="fas fa-envelope-open-text"></i> Plantillas de Correo
+                    </a>
+                </li>
+                <li>
                     <a href="<?php echo getBaseUrl(); ?>/admin/settings/">
                         <i class="fas fa-cog"></i> Configuración
                     </a>
@@ -357,7 +362,7 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
+                    <a href="<?php echo getBaseUrl(); ?>/admin/logout.php">
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>
@@ -391,7 +396,7 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
+                    <a href="<?php echo getBaseUrl(); ?>/user/logout.php">
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>
