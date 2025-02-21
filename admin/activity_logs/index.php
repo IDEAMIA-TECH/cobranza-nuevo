@@ -24,9 +24,16 @@ $date_to = isset($_GET['date_to']) ? cleanInput($_GET['date_to']) : '';
 $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 
 // Construir la consulta base
-$query = "SELECT al.*, u.name as user_name, u.email as user_email 
+$query = "SELECT al.*, 
+          CASE 
+              WHEN u.role = 'admin' THEN 'Administrador'
+              WHEN c.business_name IS NOT NULL THEN c.business_name
+              ELSE 'Sistema'
+          END as user_name,
+          u.email as user_email 
           FROM activity_logs al 
           LEFT JOIN users u ON u.id = al.user_id 
+          LEFT JOIN clients c ON c.user_id = u.id 
           WHERE 1=1";
 
 $params = array();
@@ -58,7 +65,7 @@ if ($user_id) {
 }
 
 // Obtener total de registros para paginación
-$count_query = str_replace("al.*, u.name as user_name, u.email as user_email", "COUNT(*) as total", $query);
+$count_query = str_replace("al.*, CASE WHEN u.role = 'admin' THEN 'Administrador' WHEN c.business_name IS NOT NULL THEN c.business_name ELSE 'Sistema' END as user_name, u.email as user_email", "COUNT(*) as total", $query);
 $stmt = $db->prepare($count_query);
 foreach ($execute_params as $key => $value) {
     $stmt->bindValue($key, $value);
@@ -81,7 +88,15 @@ $stmt->execute();
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener lista de usuarios para el filtro
-$query = "SELECT id, name FROM users ORDER BY name";
+$query = "SELECT u.id, 
+          CASE 
+              WHEN u.role = 'admin' THEN 'Administrador'
+              ELSE c.business_name 
+          END as name
+          FROM users u
+          LEFT JOIN clients c ON c.user_id = u.id 
+          WHERE u.role IN ('admin', 'client')
+          ORDER BY name";
 $stmt = $db->query($query);
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
