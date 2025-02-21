@@ -128,4 +128,17 @@ CREATE INDEX idx_invoice_status ON invoices(status);
 CREATE INDEX idx_invoice_due_date ON invoices(due_date);
 CREATE INDEX idx_client_rfc ON clients(rfc);
 CREATE INDEX idx_notification_status ON notifications(status);
-CREATE INDEX idx_payment_status ON payments(status); 
+CREATE INDEX idx_payment_status ON payments(status);
+
+-- Tabla de logs de correo
+CREATE TABLE email_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    recipient_email VARCHAR(255) NOT NULL,
+    recipient_name VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    email_type ENUM('new_invoice', 'payment_confirmation', 'due_reminder', 'overdue_notice') NOT NULL,
+    related_id INT COMMENT 'ID de la factura o pago relacionado',
+    status ENUM('sent', 'failed') NOT NULL DEFAULT 'sent',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB; 

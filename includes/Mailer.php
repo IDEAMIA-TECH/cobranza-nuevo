@@ -362,4 +362,27 @@ class Mailer {
         
         return $template;
     }
+    
+    private function logEmail($recipient, $subject, $type, $related_id = null, $status = 'sent', $error = null) {
+        try {
+            $query = "INSERT INTO email_logs 
+                     (recipient_email, recipient_name, subject, email_type, related_id, status, error_message) 
+                     VALUES 
+                     (:email, :name, :subject, :type, :related_id, :status, :error)";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':email', $recipient['email']);
+            $stmt->bindParam(':name', $recipient['name']);
+            $stmt->bindParam(':subject', $subject);
+            $stmt->bindParam(':type', $type);
+            $stmt->bindParam(':related_id', $related_id);
+            $stmt->bindParam(':status', $status);
+            $stmt->bindParam(':error', $error);
+            
+            return $stmt->execute();
+        } catch (Exception $e) {
+            error_log("Error logging email: " . $e->getMessage());
+            return false;
+        }
+    }
 } 
