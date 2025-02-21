@@ -866,4 +866,22 @@ select option {
 
 .btn-sm i {
     margin-right: 0;
+}
+
+/* Asegurar que todos los iconos en botones sean blancos */
+.btn i {
+    color: white !important;
+    margin-right: 5px;
+}
+
+/* Ajustes para botones pequeños */
+.btn-sm i {
+    margin-right: 0;
+    color: white !important;
+}
+
+/* Asegurar que los iconos en los botones de acción sean blancos */
+.header-actions .btn i,
+.action-buttons .btn i {
+    color: white !important;
 } 
