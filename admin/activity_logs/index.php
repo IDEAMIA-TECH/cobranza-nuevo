@@ -29,33 +29,38 @@ $query = "SELECT al.*, u.name as user_name, u.email as user_email
           LEFT JOIN users u ON u.id = al.user_id 
           WHERE 1=1";
 
-$params = [];
+$params = array();
+$execute_params = array();
 
 // Agregar filtros si existen
 if ($action_filter) {
     $query .= " AND al.action = :action";
     $params[':action'] = $action_filter;
+    $execute_params[':action'] = $action_filter;
 }
 
 if ($date_from) {
     $query .= " AND DATE(al.created_at) >= :date_from";
     $params[':date_from'] = $date_from;
+    $execute_params[':date_from'] = $date_from;
 }
 
 if ($date_to) {
     $query .= " AND DATE(al.created_at) <= :date_to";
     $params[':date_to'] = $date_to;
+    $execute_params[':date_to'] = $date_to;
 }
 
 if ($user_id) {
     $query .= " AND al.user_id = :user_id";
     $params[':user_id'] = $user_id;
+    $execute_params[':user_id'] = $user_id;
 }
 
 // Obtener total de registros para paginación
 $count_query = str_replace("al.*, u.name as user_name, u.email as user_email", "COUNT(*) as total", $query);
 $stmt = $db->prepare($count_query);
-foreach ($params as $key => $value) {
+foreach ($execute_params as $key => $value) {
     $stmt->bindValue($key, $value);
 }
 $stmt->execute();
@@ -64,14 +69,14 @@ $total_pages = ceil($total_records / $per_page);
 
 // Agregar ordenamiento y límites
 $query .= " ORDER BY al.created_at DESC LIMIT ? OFFSET ?";
-$params[':offset'] = $offset;
-$params[':per_page'] = $per_page;
 
 // Ejecutar consulta principal
 $stmt = $db->prepare($query);
-foreach ($params as $key => $value) {
+foreach ($execute_params as $key => $value) {
     $stmt->bindValue($key, $value);
 }
+$stmt->bindValue(count($execute_params) + 1, $per_page, PDO::PARAM_INT);
+$stmt->bindValue(count($execute_params) + 2, $offset, PDO::PARAM_INT);
 $stmt->execute();
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
