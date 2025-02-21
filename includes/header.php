@@ -25,6 +25,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         .logo a {
             text-decoration: none;
             color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
         .company-logo {
@@ -36,6 +39,8 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         .company-name {
             font-size: 1.2rem;
             font-weight: bold;
+            color: #333;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -48,6 +53,9 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                         <img src="<?php echo getBaseUrl() . $logo; ?>" 
                              alt="<?php echo Settings::get('company_name'); ?>" 
                              class="company-logo">
+                        <span class="company-name">
+                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
+                        </span>
                     <?php else: ?>
                         <span class="company-name">
                             <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
