@@ -1,35 +1,44 @@
 <?php
+ob_start();
+
 require_once 'includes/functions.php';
 require_once 'config/database.php';
 
 // Verificar si el usuario está logueado
-redirectIfNotLoggedIn();
+if (!isLoggedIn()) {
+    header("Location: login.php");
+    exit();
+}
 
-$database = new Database();
-$db = $database->getConnection();
-
-// Si es administrador, redirigir al dashboard de admin
+// Redirigir admin a su panel
 if (isAdmin()) {
     header("Location: admin/dashboard.php");
     exit();
 }
 
+$database = new Database();
+$db = $database->getConnection();
+
 // Obtener información del cliente
-$user_id = $_SESSION['user_id'];
-$query = "SELECT c.*, u.email 
-          FROM clients c 
+$query = "SELECT c.* FROM clients c 
           JOIN users u ON u.id = c.user_id 
           WHERE u.id = :user_id";
 $stmt = $db->prepare($query);
-$stmt->bindParam(":user_id", $user_id);
+$stmt->bindParam(":user_id", $_SESSION['user_id']);
 $stmt->execute();
 $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Obtener facturas pendientes del cliente
-$query = "SELECT * FROM invoices 
-          WHERE client_id = :client_id 
-          AND status IN ('pending', 'overdue') 
-          ORDER BY due_date ASC";
+// Obtener facturas pendientes
+$query = "SELECT i.*, 
+          DATEDIFF(i.due_date, CURDATE()) as days_to_due,
+          CASE 
+              WHEN i.status = 'pending' AND i.due_date < CURDATE() THEN 'overdue'
+              ELSE i.status 
+          END as current_status
+          FROM invoices i 
+          WHERE i.client_id = :client_id 
+          AND i.status IN ('pending', 'overdue')
+          ORDER BY i.due_date ASC";
 $stmt = $db->prepare($query);
 $stmt->bindParam(":client_id", $client['id']);
 $stmt->execute();
@@ -66,25 +75,35 @@ include 'includes/header.php';
                     </thead>
                     <tbody>
                         <?php foreach ($invoices as $invoice): ?>
-                            <tr class="<?php echo $invoice['status'] === 'overdue' ? 'overdue' : ''; ?>">
+                            <tr class="<?php echo $invoice['current_status'] === 'overdue' ? 'overdue' : ''; ?>">
                                 <td><?php echo htmlspecialchars($invoice['invoice_number']); ?></td>
                                 <td><?php echo date('d/m/Y', strtotime($invoice['issue_date'])); ?></td>
-                                <td><?php echo date('d/m/Y', strtotime($invoice['due_date'])); ?></td>
+                                <td>
+                                    <?php echo date('d/m/Y', strtotime($invoice['due_date'])); ?>
+                                    <?php if ($invoice['days_to_due'] > 0): ?>
+                                        <span class="days-remaining">
+                                            (<?php echo $invoice['days_to_due']; ?> días)
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>$<?php echo number_format($invoice['total_amount'], 2); ?></td>
                                 <td>
-                                    <span class="status-badge <?php echo $invoice['status']; ?>">
+                                    <span class="status-badge <?php echo $invoice['current_status']; ?>">
                                         <?php 
-                                        echo $invoice['status'] === 'pending' ? 'Pendiente' : 'Vencida';
+                                        echo $invoice['current_status'] === 'pending' ? 'Pendiente' : 
+                                             ($invoice['current_status'] === 'overdue' ? 'Vencida' : 
+                                              $invoice['current_status']); 
                                         ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="action-buttons">
-                                        <a href="user/invoices/view.php?id=<?php echo $invoice['id']; ?>" 
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fas fa-eye"></i> Ver
-                                        </a>
-                                    </div>
+                                    <a href="invoice-details.php?id=<?php echo $invoice['id']; ?>" 
+                                       class="btn btn-small">Ver Detalles</a>
+                                    <?php if ($invoice['pdf_path']): ?>
+                                        <a href="<?php echo htmlspecialchars($invoice['pdf_path']); ?>" 
+                                           class="btn btn-small btn-secondary" 
+                                           target="_blank">PDF</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -95,4 +114,6 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?> 
+<?php include 'includes/footer.php';
+ob_end_flush();
+?> 
