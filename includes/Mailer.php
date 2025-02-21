@@ -31,14 +31,28 @@ class Mailer {
             $this->mail->addAddress($client['email'], $client['business_name']);
             $this->mail->Subject = 'Nueva Factura - IDEAMIA Tech';
             
-            $body = $this->getEmailTemplate('new_invoice', [
-                'business_name' => $client['business_name'],
-                'invoice_number' => $invoice['invoice_number'],
-                'amount' => number_format($invoice['total_amount'], 2),
-                'due_date' => date('d/m/Y', strtotime($invoice['due_date']))
-            ]);
+            $this->mail->Body = "
+                <h2>Nueva Factura Registrada</h2>
+                <p>Estimado cliente {$client['business_name']},</p>
+                
+                <p>Le informamos que se ha registrado una nueva factura a su nombre.</p>
+                
+                <p>Detalles de la factura:</p>
+                <ul>
+                    <li>Número de Factura: {$invoice['invoice_number']}</li>
+                    <li>Monto Total: $" . number_format($invoice['total_amount'], 2) . "</li>
+                    <li>Fecha de Emisión: " . date('d/m/Y', strtotime($invoice['issue_date'])) . "</li>
+                    <li>Fecha de Vencimiento: " . date('d/m/Y', strtotime($invoice['due_date'])) . "</li>
+                </ul>
+                
+                <p>Por favor, asegúrese de realizar el pago antes de la fecha de vencimiento.</p>
+                
+                <p>Si tiene alguna pregunta o inquietud, no dude en contactarnos.</p>
+                
+                <p>Atentamente,<br>
+                IDEAMIA Tech</p>
+            ";
             
-            $this->mail->Body = $body;
             $this->mail->send();
             return true;
             
@@ -88,15 +102,29 @@ class Mailer {
             $this->mail->addAddress($client['email'], $client['business_name']);
             $this->mail->Subject = 'Recordatorio de Vencimiento - IDEAMIA Tech';
             
-            $body = $this->getEmailTemplate('due_reminder', [
-                'business_name' => $client['business_name'],
-                'invoice_number' => $invoice['invoice_number'],
-                'amount' => number_format($invoice['total_amount'], 2),
-                'due_date' => date('d/m/Y', strtotime($invoice['due_date'])),
-                'days_remaining' => $days_to_due
-            ]);
+            $this->mail->Body = "
+                <h2>Recordatorio de Vencimiento</h2>
+                <p>Estimado cliente {$client['business_name']},</p>
+                
+                <p>Le recordamos que la factura <strong>{$invoice['invoice_number']}</strong> 
+                   está próxima a vencer.</p>
+                
+                <p>Detalles de la factura:</p>
+                <ul>
+                    <li>Número de Factura: {$invoice['invoice_number']}</li>
+                    <li>Monto Total: $" . number_format($invoice['total_amount'], 2) . "</li>
+                    <li>Fecha de Vencimiento: " . date('d/m/Y', strtotime($invoice['due_date'])) . "</li>
+                    <li>Días Restantes: {$days_to_due}</li>
+                </ul>
+                
+                <p>Por favor, asegúrese de realizar el pago antes de la fecha de vencimiento.</p>
+                
+                <p>Si ya realizó el pago, por favor haga caso omiso de este mensaje.</p>
+                
+                <p>Atentamente,<br>
+                IDEAMIA Tech</p>
+            ";
             
-            $this->mail->Body = $body;
             $this->mail->send();
             return true;
             
@@ -111,14 +139,29 @@ class Mailer {
             $this->mail->addAddress($client['email'], $client['business_name']);
             $this->mail->Subject = 'Factura Vencida - IDEAMIA Tech';
             
-            $body = $this->getEmailTemplate('overdue', [
-                'business_name' => $client['business_name'],
-                'invoice_number' => $invoice['invoice_number'],
-                'amount' => number_format($invoice['total_amount'], 2),
-                'due_date' => date('d/m/Y', strtotime($invoice['due_date']))
-            ]);
+            $this->mail->Body = "
+                <h2>Notificación de Factura Vencida</h2>
+                <p>Estimado cliente {$client['business_name']},</p>
+                
+                <p>Le informamos que la factura <strong>{$invoice['invoice_number']}</strong> 
+                   se encuentra vencida.</p>
+                
+                <p>Detalles de la factura:</p>
+                <ul>
+                    <li>Número de Factura: {$invoice['invoice_number']}</li>
+                    <li>Monto Total: $" . number_format($invoice['total_amount'], 2) . "</li>
+                    <li>Fecha de Vencimiento: " . date('d/m/Y', strtotime($invoice['due_date'])) . "</li>
+                </ul>
+                
+                <p>Por favor, realice el pago correspondiente lo antes posible para evitar 
+                   cargos adicionales.</p>
+                
+                <p>Si ya realizó el pago, por favor haga caso omiso de este mensaje.</p>
+                
+                <p>Atentamente,<br>
+                IDEAMIA Tech</p>
+            ";
             
-            $this->mail->Body = $body;
             $this->mail->send();
             return true;
             
