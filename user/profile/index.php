@@ -34,12 +34,14 @@ $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $transaction_started = false;
     try {
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
             throw new Exception('Error de validación CSRF');
         }
 
         $db->beginTransaction();
+        $transaction_started = true;
 
         // Si es una subida de logo
         if (isset($_FILES['company_logo'])) {
@@ -132,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $db->commit();
+        $transaction_started = false;
         $success = "Perfil actualizado correctamente";
 
         // Recargar datos del cliente
@@ -141,7 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $client = $stmt->fetch(PDO::FETCH_ASSOC);
 
     } catch (Exception $e) {
-        $db->rollBack();
+        if ($transaction_started) {
+            $db->rollBack();
+        }
         $error = $e->getMessage();
     }
 }
