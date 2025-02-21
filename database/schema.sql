@@ -141,4 +141,27 @@ CREATE TABLE email_logs (
     status ENUM('sent', 'failed') NOT NULL DEFAULT 'sent',
     error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB; 
+) ENGINE=InnoDB;
+
+CREATE TABLE system_settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    setting_key VARCHAR(50) UNIQUE NOT NULL,
+    setting_value TEXT NOT NULL,
+    setting_description VARCHAR(255),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Insertar configuraciones por defecto
+INSERT INTO system_settings (setting_key, setting_value, setting_description) VALUES
+('company_name', 'IDEAMIA Tech', 'Nombre de la empresa'),
+('company_logo', '/assets/img/logo.png', 'Ruta del logo de la empresa'),
+('company_address', 'Dirección Fiscal', 'Dirección de la empresa'),
+('company_phone', '(123) 456-7890', 'Teléfono de contacto'),
+('company_email', 'contacto@ideamia.tech', 'Email de contacto'),
+('system_name', 'Sistema de Cobranza', 'Nombre del sistema'),
+('footer_text', '© 2024 IDEAMIA Tech - Todos los derechos reservados', 'Texto del pie de página'),
+('smtp_host', 'mail.devgdlhost.com', 'Servidor SMTP'),
+('smtp_user', 'cobranza@devgdlhost.com', 'Usuario SMTP'),
+('smtp_password', ')S8y{k6aHqf~', 'Contraseña SMTP'),
+('smtp_port', '587', 'Puerto SMTP'),
+('smtp_from', 'no-reply@devgdl.com', 'Email remitente'); 

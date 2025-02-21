@@ -13,84 +13,81 @@ if (!isAdmin()) {
 $database = new Database();
 $db = $database->getConnection();
 
-$error = '';
 $success = '';
+$error = '';
 
-// Obtener configuración actual
-$query = "SELECT * FROM system_settings";
-$stmt = $db->query($query);
-$settings = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// Procesar formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db->beginTransaction();
         
         // Actualizar configuraciones
-        $query = "INSERT INTO system_settings (setting_key, setting_value) 
-                 VALUES (:key, :value) 
-                 ON DUPLICATE KEY UPDATE setting_value = :value";
-        $stmt = $db->prepare($query);
+        $stmt = $db->prepare("UPDATE system_settings SET setting_value = :value WHERE setting_key = :key");
         
-        // Configuración de correos
-        $email_settings = [
-            'smtp_host' => cleanInput($_POST['smtp_host']),
-            'smtp_port' => cleanInput($_POST['smtp_port']),
-            'smtp_user' => cleanInput($_POST['smtp_user']),
-            'smtp_password' => !empty($_POST['smtp_password']) ? 
-                             cleanInput($_POST['smtp_password']) : 
-                             $settings['smtp_password'],
-            'smtp_from_email' => cleanInput($_POST['smtp_from_email']),
-            'smtp_from_name' => cleanInput($_POST['smtp_from_name'])
+        // Procesar cada configuración
+        $settings = [
+            'company_name',
+            'company_address',
+            'company_phone',
+            'company_email',
+            'system_name',
+            'footer_text',
+            'smtp_host',
+            'smtp_user',
+            'smtp_password',
+            'smtp_port',
+            'smtp_from'
         ];
         
-        // Configuración de notificaciones
-        $notification_settings = [
-            'reminder_days' => cleanInput($_POST['reminder_days']),
-            'overdue_interval' => cleanInput($_POST['overdue_interval']),
-            'enable_email_notifications' => isset($_POST['enable_email_notifications']) ? '1' : '0'
-        ];
-        
-        // Configuración de facturas
-        $invoice_settings = [
-            'invoice_prefix' => cleanInput($_POST['invoice_prefix']),
-            'payment_term_days' => cleanInput($_POST['payment_term_days']),
-            'tax_rate' => cleanInput($_POST['tax_rate']),
-            'company_name' => cleanInput($_POST['company_name']),
-            'company_rfc' => cleanInput($_POST['company_rfc']),
-            'company_address' => cleanInput($_POST['company_address']),
-            'company_phone' => cleanInput($_POST['company_phone']),
-            'company_email' => cleanInput($_POST['company_email'])
-        ];
-        
-        // Guardar todas las configuraciones
-        $all_settings = array_merge($email_settings, $notification_settings, $invoice_settings);
-        
-        foreach ($all_settings as $key => $value) {
-            $stmt->bindParam(":key", $key);
-            $stmt->bindParam(":value", $value);
-            $stmt->execute();
+        foreach ($settings as $key) {
+            if (isset($_POST[$key])) {
+                $stmt->bindValue(':key', $key);
+                $stmt->bindValue(':value', $_POST[$key]);
+                $stmt->execute();
+            }
         }
         
-        // Registrar la actividad
+        // Procesar logo si se subió uno nuevo
+        if (isset($_FILES['company_logo']) && $_FILES['company_logo']['error'] === 0) {
+            $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+            $filename = $_FILES['company_logo']['name'];
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            
+            if (in_array($ext, $allowed)) {
+                $upload_path = '../../assets/img/';
+                $new_filename = 'logo_' . time() . '.' . $ext;
+                
+                if (move_uploaded_file($_FILES['company_logo']['tmp_name'], $upload_path . $new_filename)) {
+                    $stmt->bindValue(':key', 'company_logo');
+                    $stmt->bindValue(':value', '/assets/img/' . $new_filename);
+                    $stmt->execute();
+                }
+            }
+        }
+        
+        // Registrar actividad
         $query = "INSERT INTO activity_logs (user_id, action, description, ip_address) 
-                 VALUES (:user_id, 'update_settings', :description, :ip_address)";
-        $description = "Actualizó la configuración del sistema";
+                  VALUES (:user_id, 'update_settings', 'Configuración del sistema actualizada', :ip)";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(":user_id", $_SESSION['user_id']);
-        $stmt->bindParam(":description", $description);
-        $stmt->bindParam(":ip_address", $_SERVER['REMOTE_ADDR']);
+        $stmt->bindValue(':user_id', $_SESSION['user_id']);
+        $stmt->bindValue(':ip', $_SERVER['REMOTE_ADDR']);
         $stmt->execute();
         
         $db->commit();
         $success = "Configuración actualizada correctamente.";
         
-        // Actualizar configuraciones en memoria
-        $settings = $all_settings;
-        
     } catch (Exception $e) {
         $db->rollBack();
-        $error = $e->getMessage();
+        $error = "Error al actualizar la configuración: " . $e->getMessage();
     }
+}
+
+// Obtener configuración actual
+$query = "SELECT * FROM system_settings ORDER BY setting_key";
+$stmt = $db->query($query);
+$settings = [];
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $settings[$row['setting_key']] = $row['setting_value'];
 }
 
 include '../../includes/header.php';
@@ -99,160 +96,154 @@ include '../../includes/header.php';
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h2>Configuración del Sistema</h2>
+        <div class="header-actions">
+            <a href="../dashboard.php" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
     </div>
-
-    <?php if ($error): ?>
-        <div class="alert alert-error"><?php echo $error; ?></div>
-    <?php endif; ?>
 
     <?php if ($success): ?>
         <div class="alert alert-success"><?php echo $success; ?></div>
     <?php endif; ?>
 
-    <form method="POST" class="settings-form">
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?php echo $error; ?></div>
+    <?php endif; ?>
+
+    <form method="POST" enctype="multipart/form-data" class="settings-form">
         <div class="settings-sections">
+            <div class="settings-section">
+                <h3>Información de la Empresa</h3>
+                
+                <div class="form-group">
+                    <label for="company_name">Nombre de la Empresa:</label>
+                    <input type="text" id="company_name" name="company_name" 
+                           value="<?php echo htmlspecialchars($settings['company_name']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="company_logo">Logo de la Empresa:</label>
+                    <input type="file" id="company_logo" name="company_logo" accept="image/*">
+                    <?php if ($settings['company_logo']): ?>
+                        <div class="current-logo">
+                            <img src="<?php echo htmlspecialchars($settings['company_logo']); ?>" 
+                                 alt="Logo actual" style="max-width: 200px;">
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group">
+                    <label for="company_address">Dirección:</label>
+                    <textarea id="company_address" name="company_address" rows="3"><?php 
+                        echo htmlspecialchars($settings['company_address']); 
+                    ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="company_phone">Teléfono:</label>
+                    <input type="text" id="company_phone" name="company_phone" 
+                           value="<?php echo htmlspecialchars($settings['company_phone']); ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="company_email">Email de Contacto:</label>
+                    <input type="email" id="company_email" name="company_email" 
+                           value="<?php echo htmlspecialchars($settings['company_email']); ?>">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>Configuración del Sistema</h3>
+                
+                <div class="form-group">
+                    <label for="system_name">Nombre del Sistema:</label>
+                    <input type="text" id="system_name" name="system_name" 
+                           value="<?php echo htmlspecialchars($settings['system_name']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="footer_text">Texto del Pie de Página:</label>
+                    <input type="text" id="footer_text" name="footer_text" 
+                           value="<?php echo htmlspecialchars($settings['footer_text']); ?>">
+                </div>
+            </div>
+
             <div class="settings-section">
                 <h3>Configuración de Correo</h3>
                 
                 <div class="form-group">
                     <label for="smtp_host">Servidor SMTP:</label>
                     <input type="text" id="smtp_host" name="smtp_host" 
-                           value="<?php echo htmlspecialchars($settings['smtp_host'] ?? ''); ?>" required>
+                           value="<?php echo htmlspecialchars($settings['smtp_host']); ?>" required>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="smtp_port">Puerto SMTP:</label>
-                        <input type="number" id="smtp_port" name="smtp_port" 
-                               value="<?php echo htmlspecialchars($settings['smtp_port'] ?? '587'); ?>" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="smtp_user">Usuario SMTP:</label>
-                        <input type="text" id="smtp_user" name="smtp_user" 
-                               value="<?php echo htmlspecialchars($settings['smtp_user'] ?? ''); ?>" required>
-                    </div>
+                <div class="form-group">
+                    <label for="smtp_user">Usuario SMTP:</label>
+                    <input type="text" id="smtp_user" name="smtp_user" 
+                           value="<?php echo htmlspecialchars($settings['smtp_user']); ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="smtp_password">Contraseña SMTP:</label>
                     <input type="password" id="smtp_password" name="smtp_password" 
-                           placeholder="Dejar en blanco para mantener la actual">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="smtp_from_email">Correo Remitente:</label>
-                        <input type="email" id="smtp_from_email" name="smtp_from_email" 
-                               value="<?php echo htmlspecialchars($settings['smtp_from_email'] ?? ''); ?>" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="smtp_from_name">Nombre Remitente:</label>
-                        <input type="text" id="smtp_from_name" name="smtp_from_name" 
-                               value="<?php echo htmlspecialchars($settings['smtp_from_name'] ?? ''); ?>" required>
-                    </div>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Configuración de Notificaciones</h3>
-                
-                <div class="form-group">
-                    <label for="reminder_days">Días para Recordatorio:</label>
-                    <input type="text" id="reminder_days" name="reminder_days" 
-                           value="<?php echo htmlspecialchars($settings['reminder_days'] ?? '15,10,5'); ?>" 
-                           placeholder="Ejemplo: 15,10,5" required>
-                    <small>Separar números con comas</small>
+                           value="<?php echo htmlspecialchars($settings['smtp_password']); ?>" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="overdue_interval">Intervalo de Notificaciones Vencidas (días):</label>
-                    <input type="number" id="overdue_interval" name="overdue_interval" 
-                           value="<?php echo htmlspecialchars($settings['overdue_interval'] ?? '5'); ?>" 
-                           min="1" required>
-                </div>
-
-                <div class="form-group checkbox-group">
-                    <label>
-                        <input type="checkbox" name="enable_email_notifications" 
-                               <?php echo ($settings['enable_email_notifications'] ?? '1') == '1' ? 'checked' : ''; ?>>
-                        Habilitar notificaciones por correo
-                    </label>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Configuración de Facturas</h3>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="invoice_prefix">Prefijo de Factura:</label>
-                        <input type="text" id="invoice_prefix" name="invoice_prefix" 
-                               value="<?php echo htmlspecialchars($settings['invoice_prefix'] ?? 'FAC-'); ?>" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="payment_term_days">Plazo de Pago (días):</label>
-                        <input type="number" id="payment_term_days" name="payment_term_days" 
-                               value="<?php echo htmlspecialchars($settings['payment_term_days'] ?? '30'); ?>" 
-                               min="1" required>
-                    </div>
+                    <label for="smtp_port">Puerto SMTP:</label>
+                    <input type="text" id="smtp_port" name="smtp_port" 
+                           value="<?php echo htmlspecialchars($settings['smtp_port']); ?>" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="tax_rate">Tasa de IVA (%):</label>
-                    <input type="number" id="tax_rate" name="tax_rate" 
-                           value="<?php echo htmlspecialchars($settings['tax_rate'] ?? '16'); ?>" 
-                           min="0" max="100" step="0.01" required>
-                </div>
-            </div>
-
-            <div class="settings-section">
-                <h3>Información de la Empresa</h3>
-                
-                <div class="form-group">
-                    <label for="company_name">Razón Social:</label>
-                    <input type="text" id="company_name" name="company_name" 
-                           value="<?php echo htmlspecialchars($settings['company_name'] ?? ''); ?>" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="company_rfc">RFC:</label>
-                    <input type="text" id="company_rfc" name="company_rfc" 
-                           value="<?php echo htmlspecialchars($settings['company_rfc'] ?? ''); ?>" 
-                           pattern="^[A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3}$" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="company_address">Dirección:</label>
-                    <textarea id="company_address" name="company_address" rows="3" required><?php 
-                        echo htmlspecialchars($settings['company_address'] ?? ''); 
-                    ?></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="company_phone">Teléfono:</label>
-                        <input type="tel" id="company_phone" name="company_phone" 
-                               value="<?php echo htmlspecialchars($settings['company_phone'] ?? ''); ?>" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="company_email">Correo Electrónico:</label>
-                        <input type="email" id="company_email" name="company_email" 
-                               value="<?php echo htmlspecialchars($settings['company_email'] ?? ''); ?>" required>
-                    </div>
+                    <label for="smtp_from">Email Remitente:</label>
+                    <input type="email" id="smtp_from" name="smtp_from" 
+                           value="<?php echo htmlspecialchars($settings['smtp_from']); ?>" required>
                 </div>
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-success">
-                <i class="fas fa-save"></i> Guardar Configuración
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar Cambios
             </button>
         </div>
     </form>
 </div>
+
+<style>
+.settings-sections {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.settings-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-section h3 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.current-logo {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+</style>
 
 <?php include '../../includes/footer.php'; ?> 

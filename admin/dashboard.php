@@ -79,6 +79,9 @@ include '../includes/header.php';
             <a href="email_logs/index.php" class="btn btn-info">
                 <i class="fas fa-envelope"></i> Historial de Correos
             </a>
+            <a href="settings/index.php" class="btn btn-dark">
+                <i class="fas fa-cog"></i> Configuración
+            </a>
         </div>
     </div>
 

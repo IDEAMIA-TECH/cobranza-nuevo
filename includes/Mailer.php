@@ -7,23 +7,30 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 class Mailer {
     private $mail;
+    private $db;
     
     public function __construct() {
         $this->mail = new PHPMailer(true);
         
         // Configuración del servidor SMTP
         $this->mail->isSMTP();
-        $this->mail->Host = 'mail.devgdlhost.com';
+        $this->mail->Host = Settings::get('smtp_host');
         $this->mail->SMTPAuth = true;
-        $this->mail->Username = 'cobranza@devgdlhost.com';
-        $this->mail->Password = ')S8y{k6aHqf~';
+        $this->mail->Username = Settings::get('smtp_user');
+        $this->mail->Password = Settings::get('smtp_password');
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $this->mail->Port = 587;
+        $this->mail->Port = Settings::get('smtp_port');
         
         // Configuración general
-        $this->mail->setFrom('no-reply@devgdl.com', 'Sistema de Cobranza');
+        $this->mail->setFrom(
+            Settings::get('smtp_from'), 
+            Settings::get('company_name')
+        );
         $this->mail->isHTML(true);
         $this->mail->CharSet = 'UTF-8';
+        
+        $database = new Database();
+        $this->db = $database->getConnection();
     }
     
     public function sendNewInvoiceNotification($client, $invoice) {
@@ -202,11 +209,9 @@ class Mailer {
     
     public function sendAdminNewRegistrationNotification($clientData) {
         try {
-            // Email del administrador (podría venir de configuración)
-            $this->mail->addAddress('admin@devgdlhost.com');
+            $this->mail->addAddress(Settings::get('company_email'));
             $this->mail->Subject = 'Nuevo Registro de Cliente - Requiere Aprobación';
             
-            // Contenido del correo
             $this->mail->Body = "
                 <h2>Nuevo Cliente Registrado</h2>
                 <p>Se ha registrado un nuevo cliente que requiere aprobación:</p>
@@ -224,7 +229,7 @@ class Mailer {
                 <p><a href='" . getBaseUrl() . "/admin/clients/pending.php'>Gestionar Clientes Pendientes</a></p>
                 <br>
                 <p>Saludos,</p>
-                <p>Sistema de Cobranza</p>
+                <p>" . Settings::get('company_name') . "</p>
             ";
             
             $this->mail->send();
