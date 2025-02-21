@@ -365,10 +365,40 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Texto extraído:', text); // Para debug
             
             // Extraer información usando expresiones regulares
-            const rfc = text.match(/RFC:?\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/i);
-            const businessName = text.match(/(?:DENOMINACIÓN|RAZÓN SOCIAL|NOMBRE):\s*(.*?)(?:\s+RFC|$)/i);
-            const regimen = text.match(/RÉGIMEN.*?:\s*(\d{3}\s*-\s*[^,\n]*)/i);
-            const cp = text.match(/C\.?P\.?:?\s*(\d{5})/i);
+            // RFC - buscar primero en el encabezado
+            let rfc = text.match(/RFC:\s*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/i);
+            if (!rfc) {
+                // Si no se encuentra, buscar en el cuerpo del documento
+                rfc = text.match(/Registro Federal de Contribuyentes[:\s]*([A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3})/i);
+            }
+            
+            // Nombre/Razón Social
+            let businessName = text.match(/Nombre,\s*denominación\s*o\s*razón\s*social\s*(.*?)\s*(?:idCIF|$)/i);
+            if (!businessName) {
+                // Intentar con formato de persona física
+                const nombre = text.match(/Nombre\s*\(s\):\s*(.*?)(?:Primer|$)/i);
+                const apellido1 = text.match(/Primer\s*Apellido:\s*(.*?)(?:Segundo|$)/i);
+                const apellido2 = text.match(/Segundo\s*Apellido:\s*(.*?)(?:Fecha|$)/i);
+                
+                if (nombre && apellido1) {
+                    let nombreCompleto = `${nombre[1].trim()} ${apellido1[1].trim()}`;
+                    if (apellido2) {
+                        nombreCompleto += ` ${apellido2[1].trim()}`;
+                    }
+                    businessName = [null, nombreCompleto];
+                }
+            }
+            
+            // Código Postal
+            const cp = text.match(/Código\s*Postal:\s*(\d{5})/i);
+            
+            // Dirección
+            const calle = text.match(/Nombre\s*de\s*Vialidad:\s*(.*?)(?:Número|$)/i);
+            const numExt = text.match(/Número\s*Exterior:\s*(\d+)/i);
+            const numInt = text.match(/Número\s*Interior:\s*(\d+)/i);
+            const colonia = text.match(/Nombre\s*de\s*la\s*Colonia:\s*(.*?)(?:Nombre|$)/i);
+            const ciudad = text.match(/Nombre\s*del\s*Municipio[^:]*:\s*(.*?)(?:Nombre|$)/i);
+            const estado = text.match(/Nombre\s*de\s*la\s*Entidad\s*Federativa:\s*(.*?)(?:\s|$)/i);
             
             // Autocompletar campos
             if (rfc) {
@@ -379,15 +409,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('business_name').value = businessName[1].trim().toUpperCase();
                 console.log('Razón Social encontrada:', businessName[1]);
             }
-            if (regimen) {
-                const regimenCode = regimen[1].match(/(\d{3})/)[1];
-                document.getElementById('tax_regime').value = regimenCode;
-                console.log('Régimen encontrado:', regimen[1], 'Código:', regimenCode);
-            }
             if (cp) {
                 document.getElementById('zip_code').value = cp[1];
                 console.log('CP encontrado:', cp[1]);
             }
+            // Autocompletar dirección
+            if (calle) document.getElementById('street').value = calle[1].trim().toUpperCase();
+            if (numExt) document.getElementById('ext_number').value = numExt[1];
+            if (numInt) document.getElementById('int_number').value = numInt[1];
+            if (colonia) document.getElementById('neighborhood').value = colonia[1].trim().toUpperCase();
+            if (ciudad) document.getElementById('city').value = ciudad[1].trim().toUpperCase();
+            if (estado) document.getElementById('state').value = estado[1].trim().toUpperCase();
             
             // Guardar el archivo
             const formData = new FormData();
