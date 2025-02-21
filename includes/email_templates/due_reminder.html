@@ -1,0 +1,18 @@
+{{include:base.html}}
+{{title:Recordatorio de Vencimiento}}
+{{content:
+<p>Estimado(a) {{business_name}},</p>
+
+<p>Le recordamos que tiene una factura próxima a vencer:</p>
+
+<ul>
+    <li>Número de Factura: <strong>{{invoice_number}}</strong></li>
+    <li>Monto: <span class="amount">${{amount}}</span></li>
+    <li>Fecha de Vencimiento: <strong>{{due_date}}</strong></li>
+    <li>Días Restantes: <strong>{{days_remaining}}</strong></li>
+</ul>
+
+<p>Por favor, realice el pago antes de la fecha de vencimiento para evitar cargos adicionales.</p>
+
+<a href="https://cobranza.ideamia.tech" class="button">Realizar Pago</a>
+}} 

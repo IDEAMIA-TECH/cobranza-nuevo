@@ -1,0 +1,17 @@
+{{include:base.html}}
+{{title:Factura Vencida}}
+{{content:
+<p>Estimado(a) {{business_name}},</p>
+
+<p>Le informamos que tiene una factura vencida:</p>
+
+<ul>
+    <li>Número de Factura: <strong>{{invoice_number}}</strong></li>
+    <li>Monto: <span class="amount">${{amount}}</span></li>
+    <li>Fecha de Vencimiento: <strong>{{due_date}}</strong></li>
+</ul>
+
+<p>Por favor, realice el pago lo antes posible para evitar inconvenientes.</p>
+
+<a href="https://cobranza.ideamia.tech" class="button">Realizar Pago Ahora</a>
+}} 

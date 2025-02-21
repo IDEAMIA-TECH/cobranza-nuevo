@@ -1,0 +1,19 @@
+{{include:base.html}}
+{{title:Nueva Factura}}
+{{content:
+<p>Estimado(a) {{business_name}},</p>
+
+<p>Le informamos que se ha generado una nueva factura con los siguientes detalles:</p>
+
+<ul>
+    <li>Número de Factura: <strong>{{invoice_number}}</strong></li>
+    <li>Monto: <span class="amount">${{amount}}</span></li>
+    <li>Fecha de Vencimiento: <strong>{{due_date}}</strong></li>
+</ul>
+
+<p>Puede acceder a su factura a través de nuestro portal web:</p>
+
+<a href="https://cobranza.ideamia.tech" class="button">Ver Factura</a>
+
+<p>Por favor, asegúrese de realizar el pago antes de la fecha de vencimiento.</p>
+}} 
