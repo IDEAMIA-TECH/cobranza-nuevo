@@ -36,33 +36,48 @@ class Mailer {
     
     public function sendNewInvoiceNotification($client, $invoice) {
         try {
+            // Obtener la plantilla de correo
+            $query = "SELECT * FROM email_templates WHERE type = 'new_invoice' LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $template = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$template) {
+                throw new Exception('Plantilla de correo no encontrada');
+            }
+            
             $this->mail->addAddress($client['email'], $client['business_name']);
-            $this->mail->Subject = 'Nueva Factura - IDEAMIA Tech';
+            $this->mail->Subject = str_replace(
+                ['{invoice_number}'],
+                [$invoice['invoice_number']],
+                $template['subject']
+            );
             
-            $this->mail->Body = "
-                <h2>Nueva Factura Registrada</h2>
-                <p>Estimado cliente {$client['business_name']},</p>
-                
-                <p>Le informamos que se ha registrado una nueva factura a su nombre.</p>
-                
-                <p>Detalles de la factura:</p>
-                <ul>
-                    <li>Número de Factura: {$invoice['invoice_number']}</li>
-                    <li>Monto Total: $" . number_format($invoice['total_amount'], 2) . "</li>
-                    <li>Fecha de Emisión: " . date('d/m/Y', strtotime($invoice['issue_date'])) . "</li>
-                    <li>Fecha de Vencimiento: " . date('d/m/Y', strtotime($invoice['due_date'])) . "</li>
-                </ul>
-                
-                <p>Por favor, asegúrese de realizar el pago antes de la fecha de vencimiento.</p>
-                
-                <p>Si tiene alguna pregunta o inquietud, no dude en contactarnos.</p>
-                
-                <p>Atentamente,<br>
-                IDEAMIA Tech</p>
-            ";
+            // Reemplazar variables en el cuerpo del correo
+            $body = $template['content'];
+            $replacements = [
+                '{client_name}' => $client['business_name'],
+                '{invoice_number}' => $invoice['invoice_number'],
+                '{total_amount}' => number_format($invoice['total_amount'], 2),
+                '{issue_date}' => date('d/m/Y', strtotime($invoice['issue_date'])),
+                '{due_date}' => date('d/m/Y', strtotime($invoice['due_date']))
+            ];
             
-            $this->mail->send();
-            return true;
+            $this->mail->Body = str_replace(
+                array_keys($replacements),
+                array_values($replacements),
+                $body
+            );
+            
+            // Enviar correo y registrar
+            if ($this->mail->send()) {
+                // Registrar el envío del correo
+                $this->logEmail([
+                    'email' => $client['email'],
+                    'name' => $client['business_name']
+                ], $this->mail->Subject, 'new_invoice', $invoice['invoice_number']);
+                return true;
+            }
             
         } catch (Exception $e) {
             error_log("Error enviando correo: " . $e->getMessage());

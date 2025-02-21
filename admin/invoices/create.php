@@ -255,6 +255,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Limpiar resultados de la sesión
             unset($_SESSION['invoice_results']);
   
+            // Enviar notificación por correo al cliente
+            try {
+                $mailer = new Mailer();
+                $mailer->sendNewInvoiceNotification($client, [
+                    'invoice_number' => $invoice_number,
+                    'total_amount' => $total_amount,
+                    'due_date' => $due_date,
+                    'issue_date' => $issue_date
+                ]);
+            } catch (Exception $e) {
+                // Loguear el error pero no detener el proceso
+                error_log("Error enviando correo de nueva factura: " . $e->getMessage());
+            }
+  
             $_SESSION['success'] = "Se guardaron $success_count facturas exitosamente";
             header("Location: index.php");
             exit();
