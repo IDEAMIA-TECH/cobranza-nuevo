@@ -1,6 +1,7 @@
 <?php
 require_once '../../includes/functions.php';
 require_once '../../config/database.php';
+require_once '../../includes/SecurityHelper.php';
 
 // Verificar si el usuario está logueado y es administrador
 redirectIfNotLoggedIn();
@@ -9,8 +10,13 @@ redirectIfNotAdmin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csf_file'])) {
     try {
         // Validar CSRF
-        if (!isset($_POST['csrf_token']) || !SecurityHelper::validateCSRF($_POST['csrf_token'])) {
+        if (!isset($_POST['csrf_token'])) {
             throw new Exception('Error de validación de seguridad');
+        }
+
+        $csrf_token = $_POST['csrf_token'];
+        if (!SecurityHelper::validateCSRFToken($csrf_token)) {
+            throw new Exception('Token de seguridad inválido');
         }
 
         $file = $_FILES['csf_file'];

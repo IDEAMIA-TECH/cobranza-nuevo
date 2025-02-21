@@ -179,6 +179,15 @@ include '../../includes/header.php';
             <div class="form-section">
                 <h3>Información Fiscal</h3>
                 
+                <input type="hidden" name="csrf_token" value="<?php echo SecurityHelper::generateCSRFToken(); ?>">
+                <div class="form-group">
+                    <label for="csf_file">Constancia de Situación Fiscal (PDF):</label>
+                    <input type="file" id="csf_file" name="csf_file" accept=".pdf">
+                    <small class="form-text text-muted">
+                        Suba la Constancia de Situación Fiscal en formato PDF para autocompletar los datos
+                    </small>
+                </div>
+
                 <div class="form-group">
                     <label for="business_name">Razón Social:</label>
                     <input type="text" id="business_name" name="business_name" 
