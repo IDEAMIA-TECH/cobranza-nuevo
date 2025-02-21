@@ -58,8 +58,22 @@ if ($status) {
 }
 
 // Obtener total de registros para paginación
-$count_query = str_replace("el.*, CASE", "COUNT(*) as total, CASE", $query);
-$count_query = preg_replace("/SELECT.*?FROM/s", "SELECT COUNT(*) as total FROM", $query);
+$count_query = "SELECT COUNT(*) as total FROM email_logs el WHERE 1=1";
+
+// Agregar los mismos filtros al count query
+if ($email_type) {
+    $count_query .= " AND el.email_type = :email_type";
+}
+if ($date_from) {
+    $count_query .= " AND DATE(el.created_at) >= :date_from";
+}
+if ($date_to) {
+    $count_query .= " AND DATE(el.created_at) <= :date_to";
+}
+if ($status) {
+    $count_query .= " AND el.status = :status";
+}
+
 $stmt = $db->prepare($count_query);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
@@ -69,15 +83,16 @@ $total_records = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 $total_pages = ceil($total_records / $per_page);
 
 // Agregar ordenamiento y límites
-$query .= " ORDER BY el.created_at DESC LIMIT :limit OFFSET :offset";
-$params[':limit'] = $per_page;
-$params[':offset'] = $offset;
+$query .= " ORDER BY el.created_at DESC LIMIT ? OFFSET ?";
 
 // Ejecutar consulta principal
 $stmt = $db->prepare($query);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
 }
+// Agregar los parámetros de paginación al final
+$stmt->bindValue(count($params) + 1, $per_page, PDO::PARAM_INT);
+$stmt->bindValue(count($params) + 2, $offset, PDO::PARAM_INT);
 $stmt->execute();
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
