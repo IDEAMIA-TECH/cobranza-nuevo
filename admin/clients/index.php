@@ -84,11 +84,11 @@ include '../../includes/header.php';
                         <div class="action-buttons">
                             <a href="view.php?id=<?php echo $client['id']; ?>" 
                                class="btn btn-sm btn-primary" title="Ver Detalles">
-                                <i class="far fa-eye"></i>
+                                <i class="fas fa-eye"></i>
                             </a>
                             <a href="edit.php?id=<?php echo $client['id']; ?>" 
                                class="btn btn-sm btn-warning" title="Editar">
-                                <i class="far fa-edit"></i>
+                                <i class="fas fa-edit"></i>
                             </a>
                             <?php if ($client['user_status'] === 'active'): ?>
                                 <button onclick="deactivateClient(<?php echo $client['id']; ?>)" 
