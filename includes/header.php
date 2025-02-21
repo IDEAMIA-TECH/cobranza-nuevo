@@ -356,14 +356,42 @@ if (isLoggedIn()) {
                     </a>
                 </li>
             <?php else: ?>
+                <li class="menu-divider">Mi Cuenta</li>
                 <li>
                     <a href="<?php echo getBaseUrl(); ?>/user/dashboard/">
                         <i class="fas fa-home"></i> Inicio
                     </a>
                 </li>
                 <li>
+                    <a href="<?php echo getBaseUrl(); ?>/user/profile/">
+                        <i class="fas fa-user-circle"></i> Mi Perfil
+                    </a>
+                </li>
+                <li class="menu-divider">Facturación</li>
+                <li>
                     <a href="<?php echo getBaseUrl(); ?>/user/invoices/">
                         <i class="fas fa-file-invoice"></i> Mis Facturas
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/user/payments/">
+                        <i class="fas fa-money-bill"></i> Mis Pagos
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/user/payments/register.php">
+                        <i class="fas fa-plus-circle"></i> Registrar Pago
+                    </a>
+                </li>
+                <li class="menu-divider">Soporte</li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/user/support/">
+                        <i class="fas fa-question-circle"></i> Ayuda
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>
             <?php endif; ?>
