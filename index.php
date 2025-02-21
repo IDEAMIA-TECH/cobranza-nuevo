@@ -10,12 +10,6 @@ if (!isLoggedIn()) {
     exit();
 }
 
-// Redirigir admin a su panel
-if (isAdmin()) {
-    header("Location: admin/dashboard.php");
-    exit();
-}
-
 $database = new Database();
 $db = $database->getConnection();
 

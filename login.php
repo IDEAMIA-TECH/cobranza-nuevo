@@ -43,7 +43,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (password_verify($password, $user['password'])) {
-                if ($user['status'] === 'active') {
+                if ($user['status'] === 'pending') {
+                    $error = "Su cuenta está pendiente de aprobación.";
+                } else if ($user['status'] === 'inactive') {
+                    $error = "Su cuenta está inactiva. Contacte al administrador.";
+                } else {
                     // Actualizar intentos de login
                     SecurityHelper::updateLoginAttempts($email, true, $db);
                     
@@ -66,20 +70,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt->execute();
                     
                     // Redirigir según el rol
-                    $redirect = $user['role'] === 'admin' ? 'admin/dashboard.php' : 'user/dashboard.php';
-                    header("Location: $redirect");
+                    if ($_SESSION['is_admin']) {
+                        header("Location: admin/dashboard.php");
+                    } else {
+                        header("Location: index.php");
+                    }
                     exit();
-                } else {
-                    throw new Exception('Tu cuenta está pendiente de activación.');
                 }
             } else {
                 SecurityHelper::updateLoginAttempts($email, false, $db);
-                throw new Exception('Credenciales incorrectas.');
+                $error = "Credenciales incorrectas.";
             }
         } else {
             // Por seguridad, actualizar intentos aunque el usuario no exista
             SecurityHelper::updateLoginAttempts($email, false, $db);
-            throw new Exception('Credenciales incorrectas.');
+            $error = "Credenciales incorrectas.";
         }
         
     } catch (Exception $e) {
