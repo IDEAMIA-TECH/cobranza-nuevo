@@ -79,7 +79,7 @@ include '../../includes/header.php';
     <div class="dashboard-header">
         <h2>Gestión de Facturas</h2>
         <div class="header-actions">
-            <a href="create.php" class="btn btn-primary">
+            <a href="create.php" class="btn">
                 <i class="fas fa-plus"></i> Nueva Factura
             </a>
         </div>
