@@ -39,7 +39,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
         .company-name {
             font-size: 1.2rem;
             font-weight: bold;
-            color: #333;
+            color: #fff;
             white-space: nowrap;
         }
     </style>
