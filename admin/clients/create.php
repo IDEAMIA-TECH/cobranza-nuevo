@@ -16,11 +16,14 @@ $error = '';
 $success = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    error_log("Iniciando proceso de creación de cliente");
     $db = null;
     try {
         $database = new Database();
         $db = $database->getConnection();
         $db->beginTransaction();
+        
+        error_log("POST Data: " . print_r($_POST, true));
         
         // Definir el array de regímenes fiscales
         $regimes = [
@@ -87,6 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
+                error_log("Campo requerido faltante: " . $field);
                 throw new Exception("El campo " . str_replace('_', ' ', $field) . " es requerido");
             }
         }
@@ -97,6 +101,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $business_name = strtoupper(cleanInput($_POST['business_name']));
         $rfc = strtoupper(cleanInput($_POST['rfc']));
         $tax_regime = cleanInput($_POST['tax_regime']);
+        
+        error_log("Datos procesados: " . print_r([
+            'email' => $email,
+            'business_name' => $business_name,
+            'rfc' => $rfc,
+            'tax_regime' => $tax_regime
+        ], true));
         
         // Validar RFC (formato mexicano)
         if (!preg_match('/^[A-ZÑ&]{3,4}[0-9]{2}[0-1][0-9][0-3][0-9][A-Z0-9]{3}$/', $rfc)) {
@@ -137,6 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->execute();
         
         if ($stmt->rowCount() > 0) {
+            error_log("Email duplicado: " . $email);
             throw new Exception('El correo electrónico ya está registrado');
         }
         
@@ -145,13 +157,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   VALUES (:email, :password, 'client', 'active')";
         $stmt = $db->prepare($query);
         $stmt->bindParam(":email", $email);
-        $stmt->bindParam(":password", password_hash($password, PASSWORD_DEFAULT));
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt->bindParam(":password", $hashed_password);
         
         if (!$stmt->execute()) {
+            error_log("Error SQL al crear usuario: " . implode(', ', $stmt->errorInfo()));
             throw new Exception('Error al crear el usuario: ' . implode(', ', $stmt->errorInfo()));
         }
         
         $user_id = $db->lastInsertId();
+        error_log("Usuario creado con ID: " . $user_id);
         
         // Crear cliente
         $query = "INSERT INTO clients (user_id, business_name, rfc, tax_regime, csf_file_path, 
@@ -180,11 +195,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ":contact_name" => $contact_name
         ];
         
+        error_log("Parámetros para crear cliente: " . print_r($params, true));
+        
         foreach ($params as $param => $value) {
             $stmt->bindValue($param, $value);
         }
         
         if (!$stmt->execute()) {
+            error_log("Error SQL al crear cliente: " . implode(', ', $stmt->errorInfo()));
             throw new Exception('Error al crear el cliente: ' . implode(', ', $stmt->errorInfo()));
         }
         
@@ -200,6 +218,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $db->commit();
         
+        error_log("Cliente creado exitosamente");
+        
         $_SESSION['success'] = "Cliente creado exitosamente";
         header("Location: index.php");
         exit();
@@ -208,7 +228,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($db && $db->inTransaction()) {
             $db->rollBack();
         }
-        $_SESSION['error'] = $e->getMessage();
+        error_log("Error en create.php: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        $error = $e->getMessage();
     }
 }
 
@@ -225,8 +247,16 @@ include '../../includes/header.php';
         </div>
     </div>
 
-    <?php if ($error): ?>
+    <?php if (!empty($error)): ?>
         <div class="alert alert-error"><?php echo $error; ?></div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-error"><?php echo $_SESSION['error']; unset($_SESSION['error']); ?></div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success"><?php echo $_SESSION['success']; unset($_SESSION['success']); ?></div>
     <?php endif; ?>
 
     <form method="POST" class="edit-form" enctype="multipart/form-data">
