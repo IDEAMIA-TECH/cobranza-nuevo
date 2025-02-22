@@ -86,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Validar campos requeridos
         $required_fields = ['email', 'password', 'business_name', 'rfc', 'tax_regime', 
                           'street', 'ext_number', 'neighborhood', 'city', 'state', 
-                          'zip_code', 'phone', 'contact_name'];
+                          'zip_code', 'contact_phone', 'contact_name'];
         
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -138,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $city = strtoupper(cleanInput($_POST['city']));
         $state = strtoupper(cleanInput($_POST['state']));
         $zip_code = strtoupper(cleanInput($_POST['zip_code']));
-        $phone = strtoupper(cleanInput($_POST['phone']));
+        $phone = strtoupper(cleanInput($_POST['contact_phone']));
         $contact_name = strtoupper(cleanInput($_POST['contact_name']));
         
         // Verificar si el email ya existe
@@ -402,22 +402,28 @@ include '../../includes/header.php';
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="contact_name">Nombre del Contacto:</label>
-                        <input type="text" id="contact_name" name="contact_name" required>
+                        <input type="text" id="contact_name" name="contact_name" required
+                               value="<?php echo isset($_POST['contact_name']) ? htmlspecialchars($_POST['contact_name']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
                         <label for="contact_phone">Teléfono:</label>
-                        <input type="tel" id="contact_phone" name="contact_phone" required>
+                        <input type="tel" id="contact_phone" name="contact_phone" required
+                               value="<?php echo isset($_POST['contact_phone']) ? htmlspecialchars($_POST['contact_phone']) : ''; ?>"
+                               pattern="[0-9]{10}">
+                        <small class="form-text text-muted">Formato: 10 dígitos sin espacios ni guiones</small>
                     </div>
                     
                     <div class="form-group">
                         <label for="contact_email">Correo Electrónico:</label>
-                        <input type="email" id="contact_email" name="contact_email" required>
+                        <input type="email" id="contact_email" name="contact_email"
+                               value="<?php echo isset($_POST['contact_email']) ? htmlspecialchars($_POST['contact_email']) : ''; ?>">
                     </div>
                     
                     <div class="form-group">
                         <label for="contact_position">Puesto:</label>
-                        <input type="text" id="contact_position" name="contact_position" required>
+                        <input type="text" id="contact_position" name="contact_position"
+                               value="<?php echo isset($_POST['contact_position']) ? htmlspecialchars($_POST['contact_position']) : ''; ?>">
                     </div>
                 </div>
             </div>
