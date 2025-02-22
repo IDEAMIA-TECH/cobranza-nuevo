@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Procesar archivo CSF si fue subido
         $csf_file_path = null;
-        if (isset($_FILES['csf_file']) && $_FILES['csf_file']['error'] === UPLOAD_ERR_OK) {
+        if (isset($_FILES['csf_file']) && $_FILES['csf_file']['error'] === UPLOAD_ERR_OK && !empty($_FILES['csf_file']['name'])) {
             $file = $_FILES['csf_file'];
             $fileName = $file['name'];
             $fileType = $file['type'];
@@ -56,6 +56,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
         
+        // Validar campos requeridos
+        $required_fields = ['email', 'password', 'business_name', 'rfc', 'tax_regime', 
+                          'street', 'ext_number', 'neighborhood', 'city', 'state', 
+                          'zip_code', 'contact_name', 'contact_phone', 'contact_email'];
+        
+        foreach ($required_fields as $field) {
+            if (empty($_POST[$field])) {
+                throw new Exception("El campo " . str_replace('_', ' ', $field) . " es requerido");
+            }
+        }
+        
         // Convertir todos los datos a mayúsculas
         $email = strtoupper(cleanInput($_POST['email']));
         $password = $_POST['password']; // La contraseña no se convierte a mayúsculas
@@ -68,41 +79,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception('El RFC no tiene un formato válido');
         }
         
+        // Validar email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('El correo electrónico no tiene un formato válido');
+        }
+        
         // Validar contraseña
         if (!SecurityHelper::validatePassword($password)) {
             throw new Exception('La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales');
         }
         
-        // Validar régimen fiscal
-        if (!preg_match('/^[0-9]{3}$/', $tax_regime)) {
+        // Validar régimen fiscal y asegurar que existe en el catálogo
+        if (!preg_match('/^[0-9]{3}$/', $tax_regime) || !isset($regimes[$tax_regime])) {
             throw new Exception('Por favor seleccione un régimen fiscal válido');
         }
         
-        // Convertir el código a descripción completa
-        $regimes = [
-            '601' => '601 - GENERAL DE LEY PERSONAS MORALES',
-            '603' => '603 - PERSONAS MORALES CON FINES NO LUCRATIVOS',
-            '605' => '605 - SUELDOS Y SALARIOS E INGRESOS ASIMILADOS A SALARIOS',
-            '606' => '606 - ARRENDAMIENTO',
-            '607' => '607 - RÉGIMEN DE ENAJENACIÓN O ADQUISICIÓN DE BIENES',
-            '608' => '608 - DEMÁS INGRESOS',
-            '609' => '609 - CONSOLIDACIÓN',
-            '610' => '610 - RESIDENTES EN EL EXTRANJERO SIN ESTABLECIMIENTO PERMANENTE EN MÉXICO',
-            '611' => '611 - INGRESOS POR DIVIDENDOS (SOCIOS Y ACCIONISTAS)',
-            '612' => '612 - PERSONAS FÍSICAS CON ACTIVIDADES EMPRESARIALES Y PROFESIONALES',
-            '614' => '614 - INGRESOS POR INTERESES',
-            '615' => '615 - RÉGIMEN DE LOS INGRESOS POR OBTENCIÓN DE PREMIOS',
-            '616' => '616 - SIN OBLIGACIONES FISCALES',
-            '620' => '620 - SOCIEDADES COOPERATIVAS DE PRODUCCIÓN QUE OPTAN POR DIFERIR SUS INGRESOS',
-            '621' => '621 - INCORPORACIÓN FISCAL',
-            '622' => '622 - ACTIVIDADES AGRÍCOLAS, GANADERAS, SILVÍCOLAS Y PESQUERAS',
-            '623' => '623 - OPCIONAL PARA GRUPOS DE SOCIEDADES',
-            '624' => '624 - COORDINADOS',
-            '625' => '625 - RÉGIMEN DE LAS ACTIVIDADES EMPRESARIALES CON INGRESOS A TRAVÉS DE PLATAFORMAS TECNOLÓGICAS',
-            '626' => '626 - RÉGIMEN SIMPLIFICADO DE CONFIANZA'
-        ];
-        
-        $tax_regime = $regimes[$tax_regime] ?? throw new Exception('Régimen fiscal no válido');
+        $tax_regime = $regimes[$tax_regime];
         
         $street = strtoupper(cleanInput($_POST['street']));
         $ext_number = strtoupper(cleanInput($_POST['ext_number']));
