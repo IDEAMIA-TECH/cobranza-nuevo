@@ -88,6 +88,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception('Error de validación de seguridad');
         }
 
+        // Inicializar base de datos
+        $database = new Database();
+        $db = $database->getConnection();
         $db->beginTransaction();
 
         // Validar datos
@@ -106,7 +109,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'invoice_id' => $invoice_id,
             'amount' => $amount,
             'payment_date' => $payment_date,
-            'payment_method' => $payment_method
+            'payment_method' => $payment_method,
+            'post_data' => $_POST
         ]));
 
         if ($amount <= 0) {
@@ -286,7 +290,7 @@ include '../../includes/header.php';
                 </form>
             </div>
 
-            <form method="POST" action="register.php" class="payment-form">
+            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="payment-form">
                 <?php echo SecurityHelper::getCSRFTokenField(); ?>
                 <input type="hidden" name="invoice_id" value="<?php echo $invoice_id; ?>">
                 
@@ -296,7 +300,7 @@ include '../../includes/header.php';
                         <label for="amount">Monto:</label>
                         <input type="number" id="amount" name="amount" step="0.01" min="0.01"
                               class="form-control"
-                              value="<?php echo isset($payment_data['amount']) ? $payment_data['amount'] : $result['pending_amount']; ?>"
+                              value="<?php echo number_format($result['pending_amount'], 2, '.', ''); ?>"
                               required>
                     </div>
                     
@@ -350,6 +354,21 @@ include '../../includes/header.php';
 
                 if (!amount || !payment_date || !payment_method) {
                     alert('Por favor complete todos los campos requeridos');
+                    return false;
+                }
+
+                // Validar monto
+                var pendingAmount = <?php echo $result['pending_amount']; ?>;
+                if (parseFloat(amount) > pendingAmount) {
+                    alert('El monto no puede ser mayor al saldo pendiente');
+                    return false;
+                }
+
+                // Validar fecha
+                var selectedDate = new Date(payment_date);
+                var today = new Date();
+                if (selectedDate > today) {
+                    alert('La fecha de pago no puede ser futura');
                     return false;
                 }
 
