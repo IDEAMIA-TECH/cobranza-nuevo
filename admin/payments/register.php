@@ -83,6 +83,11 @@ function parsePaymentXML($xml_content) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
+        // Validar CSRF token
+        if (!SecurityHelper::validateCSRF()) {
+            throw new Exception('Error de validación de seguridad');
+        }
+
         $db->beginTransaction();
 
         // Validar datos
@@ -95,6 +100,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $payment_date = cleanInput($_POST['payment_date']);
         $payment_method = cleanInput($_POST['payment_method']);
         $reference = cleanInput($_POST['reference']);
+
+        // Debug
+        error_log("Procesando pago: " . json_encode([
+            'invoice_id' => $invoice_id,
+            'amount' => $amount,
+            'payment_date' => $payment_date,
+            'payment_method' => $payment_method
+        ]));
 
         if ($amount <= 0) {
             throw new Exception('El monto debe ser mayor a cero');
@@ -273,7 +286,7 @@ include '../../includes/header.php';
                 </form>
             </div>
 
-            <form method="POST" class="payment-form">
+            <form method="POST" action="register.php" class="payment-form">
                 <?php echo SecurityHelper::getCSRFTokenField(); ?>
                 <input type="hidden" name="invoice_id" value="<?php echo $invoice_id; ?>">
                 
@@ -281,21 +294,24 @@ include '../../includes/header.php';
                     <h3>Información del Pago</h3>
                     <div class="form-group">
                         <label for="amount">Monto:</label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" 
+                        <input type="number" id="amount" name="amount" step="0.01" min="0.01"
+                              class="form-control"
                               value="<?php echo isset($payment_data['amount']) ? $payment_data['amount'] : $result['pending_amount']; ?>"
                               required>
                     </div>
                     
                     <div class="form-group">
                         <label for="payment_date">Fecha de Pago:</label>
-                        <input type="date" id="payment_date" name="payment_date" 
+                        <input type="date" id="payment_date" name="payment_date"
+                              class="form-control"
                               value="<?php echo date('Y-m-d'); ?>"
                               required>
                     </div>
 
                     <div class="form-group">
                         <label for="payment_method">Método de Pago:</label>
-                        <select name="payment_method" id="payment_method" class="form-control" required>
+                        <select name="payment_method" id="payment_method" class="form-control" required
+                                onchange="toggleReferenceField()">
                             <option value="">Seleccionar método</option>
                             <option value="transfer">Transferencia</option>
                             <option value="cash">Efectivo</option>
@@ -306,23 +322,46 @@ include '../../includes/header.php';
 
                     <div class="form-group">
                         <label for="reference">Referencia:</label>
-                        <input type="text" id="reference" name="reference" 
-                               placeholder="Número de transferencia, cheque, etc.">
+                        <input type="text" id="reference" name="reference"
+                              class="form-control"
+                              placeholder="Número de transferencia, cheque, etc.">
                     </div>
 
                     <div class="form-group">
                         <label for="notes">Notas:</label>
-                        <textarea id="notes" name="notes" rows="3" 
+                        <textarea id="notes" name="notes" rows="3"
+                                  class="form-control"
                                   placeholder="Observaciones adicionales"></textarea>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success" onclick="return validateForm()">
                         <i class="fas fa-save"></i> Registrar Pago
                     </button>
                 </div>
             </form>
+
+            <script>
+            function validateForm() {
+                var amount = document.getElementById('amount').value;
+                var payment_date = document.getElementById('payment_date').value;
+                var payment_method = document.getElementById('payment_method').value;
+
+                if (!amount || !payment_date || !payment_method) {
+                    alert('Por favor complete todos los campos requeridos');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function toggleReferenceField() {
+                var method = document.getElementById('payment_method').value;
+                var referenceField = document.getElementById('reference');
+                referenceField.required = (method === 'transfer' || method === 'check');
+            }
+            </script>
         </div>
     </div>
 </div>
