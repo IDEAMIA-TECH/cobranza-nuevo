@@ -83,138 +83,139 @@ function parsePaymentXML($xml_content) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Validar CSRF token
-        if (!SecurityHelper::validateCSRF()) {
-            throw new Exception('Error de validación de seguridad');
-        }
+        // Procesar archivo XML si fue subido
+        if (isset($_FILES['xml_file']) && $_FILES['xml_file']['error'] === UPLOAD_ERR_OK) {
+            $xml_content = file_get_contents($_FILES['xml_file']['tmp_name']);
+            $payment_data = parsePaymentXML($xml_content);
 
-        // Usar la conexión existente
-        $db->beginTransaction();
-
-        // Validar datos
-        if (!isset($_POST['invoice_id']) || !is_numeric($_POST['invoice_id'])) {
-            throw new Exception('ID de factura inválido');
-        }
-
-        $invoice_id = (int)$_POST['invoice_id'];
-        $amount = (float)str_replace(',', '', $_POST['amount']);
-        $payment_date = cleanInput($_POST['payment_date']);
-        $payment_method = cleanInput($_POST['payment_method']);
-        $reference = cleanInput($_POST['reference']);
-
-        // Debug
-        error_log("Procesando pago: " . json_encode([
-            'invoice_id' => $invoice_id,
-            'amount' => $amount,
-            'payment_date' => $payment_date,
-            'payment_method' => $payment_method,
-            'post_data' => $_POST
-        ]));
-
-        if ($amount <= 0) {
-            throw new Exception('El monto debe ser mayor a cero');
-        }
-
-        // Obtener información de la factura
-        $query = "SELECT i.*, c.business_name, c.email, u.email as client_email 
-                 FROM invoices i 
-                 JOIN clients c ON i.client_id = c.id 
-                 JOIN users u ON c.user_id = u.id 
-                 WHERE i.id = :invoice_id";
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':invoice_id', $invoice_id);
-        $stmt->execute();
-
-        if ($stmt->rowCount() === 0) {
-            throw new Exception('Factura no encontrada');
-        }
-
-        $invoice_data = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Validar que el monto no exceda el saldo pendiente
-        $query = "SELECT COALESCE(SUM(amount), 0) as total_paid 
-                 FROM payments 
-                 WHERE invoice_id = :invoice_id";
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':invoice_id', $invoice_id);
-        $stmt->execute();
-        $total_paid = $stmt->fetch(PDO::FETCH_ASSOC)['total_paid'];
-
-        $remaining_balance = $invoice_data['total_amount'] - $total_paid;
-
-        if ($amount > $remaining_balance) {
-            throw new Exception('El monto del pago excede el saldo pendiente');
-        }
-
-        // Registrar actividad
-        $query = "INSERT INTO activity_logs (user_id, action, description, ip_address) 
-                 VALUES (:user_id, :action, :description, :ip_address)";
-        $description = "Registró pago de $" . number_format($amount, 2) . 
-                      " para la factura " . $invoice_data['invoice_number'];
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':user_id', $_SESSION['user_id']);
-        $stmt->bindParam(':action', 'register_payment');
-        $stmt->bindParam(':description', $description);
-        $stmt->bindParam(':ip_address', $_SERVER['REMOTE_ADDR']);
-        $stmt->execute();
-
-        // Registrar el pago
-        $query = "INSERT INTO payments (invoice_id, amount, payment_date, payment_method, reference) 
-                 VALUES (:invoice_id, :amount, :payment_date, :payment_method, :reference)";
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':invoice_id', $invoice_id);
-        $stmt->bindParam(':amount', $amount);
-        $stmt->bindParam(':payment_date', $payment_date);
-        $stmt->bindParam(':payment_method', $payment_method);
-        $stmt->bindParam(':reference', $reference);
-        if (!$stmt->execute()) {
-            throw new Exception('Error al registrar el pago: ' . implode(', ', $stmt->errorInfo()));
-        }
-
-        // Actualizar estado de la factura si está pagada completamente
-        $new_total_paid = $total_paid + $amount;
-        if ($new_total_paid >= $invoice_data['total_amount']) {
-            $query = "UPDATE invoices SET status = 'paid' WHERE id = :invoice_id";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':invoice_id', $invoice_id);
-            if (!$stmt->execute()) {
-                throw new Exception('Error al actualizar estado de la factura: ' . implode(', ', $stmt->errorInfo()));
+            // Verificar que el UUID relacionado coincida con la factura
+            $found_invoice = false;
+            foreach ($payment_data['related_documents'] as $doc) {
+                if ($doc['uuid'] === $invoice['invoice_uuid']) {
+                    $payment_data['amount'] = $doc['amount'];
+                    $found_invoice = true;
+                    break;
+                }
             }
+
+            if (!$found_invoice) {
+                throw new Exception("El XML no corresponde a un pago para esta factura");
+            }
+
+            // Guardar el archivo XML temporalmente
+            $temp_xml_directory = '../../uploads/temp/';
+            if (!file_exists($temp_xml_directory)) {
+                mkdir($temp_xml_directory, 0755, true);
+            }
+            $xml_filename = $payment_data['uuid'] . '.xml';
+            move_uploaded_file($_FILES['xml_file']['tmp_name'], $temp_xml_directory . $xml_filename);
+            $payment_data['xml_path'] = 'uploads/temp/' . $xml_filename;
+
+            $success = "XML procesado correctamente. Por favor, verifique los datos y complete la información adicional.";
         }
 
-        // Obtener datos del cliente para el correo
-        $client_data = [
-            'email' => $invoice_data['client_email'],
-            'business_name' => $invoice_data['business_name']
-        ];
-
-        $db->commit();
-
-        // Enviar correo de confirmación
-        try {
-            $mailer = new Mailer();
-            $mailer->sendPaymentConfirmation($client_data, $invoice_data, [
+        // Si se envió el formulario completo
+        if (isset($_POST['save_payment'])) {
+            $db->beginTransaction();
+            
+            // Validar datos del pago
+            $amount = !empty($payment_data['amount']) ? $payment_data['amount'] : floatval($_POST['amount']);
+            $payment_date = !empty($payment_data['payment_date']) ? date('Y-m-d', strtotime($payment_data['payment_date'])) : cleanInput($_POST['payment_date']);
+            $payment_method = !empty($payment_data['payment_method']) ? $payment_data['payment_method'] : cleanInput($_POST['payment_method']);
+            $reference = cleanInput($_POST['reference']);
+            $notes = cleanInput($_POST['notes']);
+            
+            if ($amount <= 0) {
+                throw new Exception("El monto debe ser mayor a cero.");
+            }
+            
+            // Verificar que el monto no exceda el total pendiente
+            $query = "SELECT 
+                        i.total_amount,
+                        i.total_amount - COALESCE(SUM(p.amount), 0) as pending_amount
+                      FROM invoices i 
+                      LEFT JOIN payments p ON p.invoice_id = i.id
+                      WHERE i.id = :invoice_id";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($amount > $result['pending_amount']) {
+                throw new Exception("El monto excede el saldo pendiente de la factura.");
+            }
+            
+            // Registrar el pago
+            $payment_uuid = isset($payment_data['uuid']) ? $payment_data['uuid'] : uniqid();
+            $xml_path = isset($payment_data['xml_path']) ? $payment_data['xml_path'] : '';
+            
+            $query = "INSERT INTO payments 
+                      (invoice_id, amount, payment_date, payment_method, reference, notes, created_by,
+                       payment_uuid, xml_path, status) 
+                      VALUES 
+                      (:invoice_id, :amount, :payment_date, :payment_method, :reference, :notes, :created_by,
+                       :payment_uuid, :xml_path, 'processed')";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(":invoice_id", $invoice_id);
+            $stmt->bindParam(":amount", $amount);
+            $stmt->bindParam(":payment_date", $payment_date);
+            $stmt->bindParam(":payment_method", $payment_method);
+            $stmt->bindParam(":reference", $reference);
+            $stmt->bindParam(":notes", $notes);
+            $stmt->bindParam(":created_by", $_SESSION['user_id']);
+            $stmt->bindParam(":payment_uuid", $payment_uuid);
+            $stmt->bindParam(":xml_path", $xml_path);
+            $stmt->execute();
+            
+            // Verificar si con este pago se completa el total
+            $new_pending = $result['pending_amount'] - $amount;
+            if ($new_pending <= 0) {
+                // Actualizar estado de la factura a pagada
+                $query = "UPDATE invoices SET status = 'paid' WHERE id = :invoice_id";
+                $stmt = $db->prepare($query);
+                $stmt->bindParam(":invoice_id", $invoice_id);
+                $stmt->execute();
+            }
+            
+            // Registrar la actividad
+            $query = "INSERT INTO activity_logs (user_id, action, description, ip_address) 
+                     VALUES (:user_id, 'register_payment', :description, :ip_address)";
+            $description = "Registró pago de $" . number_format($amount, 2) . 
+                          " para la factura: " . $invoice['invoice_number'];
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(":user_id", $_SESSION['user_id']);
+            $stmt->bindParam(":description", $description);
+            $stmt->bindParam(":ip_address", $_SERVER['REMOTE_ADDR']);
+            $stmt->execute();
+            
+            $db->commit();
+            
+            // Enviar confirmación por correo
+            // Preparar los datos necesarios para el correo
+            $payment_info = [
                 'amount' => $amount,
                 'payment_date' => $payment_date,
                 'payment_method' => $payment_method,
                 'reference' => $reference
-            ]);
-        } catch (Exception $e) {
-            error_log("Error al enviar confirmación de pago: " . $e->getMessage());
+            ];
+            
+            $mailer = new Mailer();
+            $mailer->sendPaymentConfirmation([
+                'email' => $invoice['email'],
+                'business_name' => $invoice['business_name']
+            ], [
+                'invoice_number' => $invoice['invoice_number'],
+                'total_amount' => $invoice['total_amount'],
+                'issue_date' => $invoice['issue_date']
+            ], $payment_info);
+            
+            $success = "Pago registrado correctamente.";
+            header("refresh:2;url=../invoices/view.php?id=" . $invoice_id);
         }
-
-        $_SESSION['success'] = "Pago registrado correctamente";
-        header("Location: ../invoices/view.php?id=" . $invoice_id);
-        exit();
-
     } catch (Exception $e) {
-        if (isset($db) && $db->inTransaction()) {
-            $db->rollBack();
-        }
-        $_SESSION['error'] = $e->getMessage();
-        error_log("Error en registro de pago: " . $e->getMessage());
-        header("Location: register.php?invoice_id=" . $invoice_id);
-        exit();
+        $db->rollBack();
+        $error = $e->getMessage();
     }
 }
 
@@ -293,32 +294,29 @@ include '../../includes/header.php';
                 </form>
             </div>
 
-            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" class="payment-form">
+            <form method="POST" class="payment-form">
                 <?php echo SecurityHelper::getCSRFTokenField(); ?>
-                <input type="hidden" name="invoice_id" value="<?php echo $invoice_id; ?>">
+                <input type="hidden" name="save_payment" value="1">
                 
                 <div class="form-section">
                     <h3>Información del Pago</h3>
                     <div class="form-group">
                         <label for="amount">Monto:</label>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0.01"
-                              class="form-control"
-                              value="<?php echo number_format($result['pending_amount'], 2, '.', ''); ?>"
-                              required>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" 
+                              value="<?php echo isset($payment_data['amount']) ? $payment_data['amount'] : ''; ?>"
+                              <?php echo isset($payment_data['amount']) ? 'readonly' : 'required'; ?>>
                     </div>
                     
                     <div class="form-group">
                         <label for="payment_date">Fecha de Pago:</label>
-                        <input type="date" id="payment_date" name="payment_date"
-                              class="form-control"
-                              value="<?php echo date('Y-m-d'); ?>"
-                              required>
+                        <input type="date" id="payment_date" name="payment_date" 
+                              value="<?php echo isset($payment_data['payment_date']) ? date('Y-m-d', strtotime($payment_data['payment_date'])) : ''; ?>"
+                              <?php echo isset($payment_data['payment_date']) ? 'readonly' : 'required'; ?>>
                     </div>
 
                     <div class="form-group">
                         <label for="payment_method">Método de Pago:</label>
-                        <select name="payment_method" id="payment_method" class="form-control" required
-                                onchange="toggleReferenceField()">
+                        <select name="payment_method" id="payment_method" class="form-control" required>
                             <option value="">Seleccionar método</option>
                             <option value="transfer">Transferencia</option>
                             <option value="cash">Efectivo</option>
@@ -329,61 +327,23 @@ include '../../includes/header.php';
 
                     <div class="form-group">
                         <label for="reference">Referencia:</label>
-                        <input type="text" id="reference" name="reference"
-                              class="form-control"
-                              placeholder="Número de transferencia, cheque, etc.">
+                        <input type="text" id="reference" name="reference" 
+                               placeholder="Número de transferencia, cheque, etc.">
                     </div>
 
                     <div class="form-group">
                         <label for="notes">Notas:</label>
-                        <textarea id="notes" name="notes" rows="3"
-                                  class="form-control"
+                        <textarea id="notes" name="notes" rows="3" 
                                   placeholder="Observaciones adicionales"></textarea>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-success" onclick="return validateForm()">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Registrar Pago
                     </button>
                 </div>
             </form>
-
-            <script>
-            function validateForm() {
-                var amount = document.getElementById('amount').value;
-                var payment_date = document.getElementById('payment_date').value;
-                var payment_method = document.getElementById('payment_method').value;
-
-                if (!amount || !payment_date || !payment_method) {
-                    alert('Por favor complete todos los campos requeridos');
-                    return false;
-                }
-
-                // Validar monto
-                var pendingAmount = <?php echo $result['pending_amount']; ?>;
-                if (parseFloat(amount) > pendingAmount) {
-                    alert('El monto no puede ser mayor al saldo pendiente');
-                    return false;
-                }
-
-                // Validar fecha
-                var selectedDate = new Date(payment_date);
-                var today = new Date();
-                if (selectedDate > today) {
-                    alert('La fecha de pago no puede ser futura');
-                    return false;
-                }
-
-                return true;
-            }
-
-            function toggleReferenceField() {
-                var method = document.getElementById('payment_method').value;
-                var referenceField = document.getElementById('reference');
-                referenceField.required = (method === 'transfer' || method === 'check');
-            }
-            </script>
         </div>
     </div>
 </div>
