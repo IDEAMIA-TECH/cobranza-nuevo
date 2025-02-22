@@ -16,7 +16,7 @@ class Mailer {
         try {
             // Configuración del servidor SMTP
             $this->mail->isSMTP();
-            $this->mail->SMTPDebug = 2;  // Habilitar debug
+            $this->mail->SMTPDebug = 0;  // 0 = off, 1 = client messages, 2 = client and server messages
             $this->mail->Host = Settings::get('smtp_host');
             $this->mail->SMTPAuth = true;
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
