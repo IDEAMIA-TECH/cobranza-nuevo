@@ -479,15 +479,7 @@ class Mailer {
                 'type' => $type,
                 'related_id' => $related_id,
                 'status' => $status
-            ], JSON_UNESCAPED_UNICODE));
-
-            // Preparar y limpiar datos
-            $recipientEmail = mb_substr(trim($recipient['email']), 0, 255);
-            $recipientName = mb_substr(trim($recipient['name'] ?? ''), 0, 255);
-            $emailSubject = mb_substr(trim($subject), 0, 255);
-            $emailType = mb_substr(trim($type), 0, 50);
-            $relatedId = $related_id ? mb_substr(trim($related_id), 0, 100) : null;
-            $errorMsg = $error ? mb_substr(trim($error), 0, 65535) : null;
+            ]));
 
             $query = "INSERT INTO email_logs 
                      (recipient_email, recipient_name, subject, email_type, related_id, status, error_message, created_at) 
@@ -496,22 +488,27 @@ class Mailer {
             
             $stmt = $this->db->prepare($query);
             
+            // Validar y limpiar datos antes de insertar
+            $recipientEmail = filter_var($recipient['email'], FILTER_SANITIZE_EMAIL);
+            $recipientName = isset($recipient['name']) ? substr(trim($recipient['name']), 0, 255) : '';
+            $emailSubject = substr(trim($subject), 0, 255);
+            $emailType = substr(trim($type), 0, 50);
+            
             $stmt->bindParam(':email', $recipientEmail, PDO::PARAM_STR);
             $stmt->bindParam(':name', $recipientName, PDO::PARAM_STR);
             $stmt->bindParam(':subject', $emailSubject, PDO::PARAM_STR);
             $stmt->bindParam(':type', $emailType, PDO::PARAM_STR);
-            $stmt->bindParam(':related_id', $relatedId, PDO::PARAM_STR);
+            $stmt->bindParam(':related_id', $related_id, PDO::PARAM_STR);
             $stmt->bindParam(':status', $status, PDO::PARAM_STR);
-            $stmt->bindParam(':error', $errorMsg, PDO::PARAM_STR);
+            $stmt->bindParam(':error', $error, PDO::PARAM_STR);
             
             $result = $stmt->execute();
             
             if (!$result) {
                 $errorInfo = $stmt->errorInfo();
-                throw new Exception('Error al guardar el log de correo: ' . json_encode($errorInfo));
+                throw new Exception('Error al guardar el log de correo: ' . $errorInfo[2]);
             }
             
-            error_log("Email registrado exitosamente en logs");
             return true;
         } catch (Exception $e) {
             error_log("Error al registrar correo en logs: " . $e->getMessage() . 
