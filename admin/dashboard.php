@@ -24,8 +24,8 @@ $stats = [
 // Contar facturas pendientes y vencidas
 $query = "SELECT 
             COUNT(CASE WHEN status = 'pending' AND due_date >= CURDATE() THEN 1 END) as pending_count,
-            COUNT(CASE WHEN status = 'pending' AND due_date < CURDATE() THEN 1 END) as overdue_count,
-            SUM(CASE WHEN status = 'pending' THEN total_amount ELSE 0 END) as total_pending
+            COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_count,
+            SUM(CASE WHEN status = 'overdue' THEN total_amount ELSE 0 END) as total_pending
           FROM invoices";
 $stmt = $db->query($query);
 $result = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -362,7 +362,7 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/logout.php">
+                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>
