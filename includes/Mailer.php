@@ -157,46 +157,11 @@ class Mailer {
                 IDEAMIA Tech</p>
             ";
             
-            if ($this->mail->send()) {
-                $this->logEmail(
-                    [
-                        'email' => $client['email'],
-                        'name' => $client['business_name']
-                    ],
-                    $this->mail->Subject,
-                    'payment_confirmation',
-                    $invoice['invoice_number'],
-                    'sent'
-                );
-                return true;
-            }
-            
-            $this->logEmail(
-                [
-                    'email' => $client['email'],
-                    'name' => $client['business_name']
-                ],
-                $this->mail->Subject,
-                'payment_confirmation',
-                $invoice['invoice_number'],
-                'failed',
-                $this->mail->ErrorInfo
-            );
-            return false;
+            $this->mail->send();
+            return true;
             
         } catch (Exception $e) {
             error_log("Error enviando correo: " . $e->getMessage());
-            $this->logEmail(
-                [
-                    'email' => $client['email'],
-                    'name' => $client['business_name']
-                ],
-                $this->mail->Subject,
-                'payment_confirmation',
-                $invoice['invoice_number'],
-                'failed',
-                $e->getMessage()
-            );
             return false;
         }
     }
@@ -229,46 +194,11 @@ class Mailer {
                 IDEAMIA Tech</p>
             ";
             
-            if ($this->mail->send()) {
-                $this->logEmail(
-                    [
-                        'email' => $client['email'],
-                        'name' => $client['business_name']
-                    ],
-                    $this->mail->Subject,
-                    'due_reminder',
-                    $invoice['invoice_number'],
-                    'sent'
-                );
-                return true;
-            }
-            
-            $this->logEmail(
-                [
-                    'email' => $client['email'],
-                    'name' => $client['business_name']
-                ],
-                $this->mail->Subject,
-                'due_reminder',
-                $invoice['invoice_number'],
-                'failed',
-                $this->mail->ErrorInfo
-            );
-            return false;
+            $this->mail->send();
+            return true;
             
         } catch (Exception $e) {
             error_log("Error enviando correo: " . $e->getMessage());
-            $this->logEmail(
-                [
-                    'email' => $client['email'],
-                    'name' => $client['business_name']
-                ],
-                $this->mail->Subject,
-                'due_reminder',
-                $invoice['invoice_number'],
-                'failed',
-                $e->getMessage()
-            );
             return false;
         }
     }
