@@ -23,14 +23,14 @@ $stats = [
 
 // Contar facturas pendientes y vencidas
 $query = "SELECT 
-            COUNT(CASE WHEN status = 'pending' AND due_date >= CURDATE() THEN 1 END) as pending_count,
+            COUNT(CASE WHEN status = 'paid' AND due_date >= CURDATE() THEN 1 END) as paid_count,
             COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_count,
             SUM(CASE WHEN status = 'overdue' THEN total_amount ELSE 0 END) as total_pending
           FROM invoices";
 $stmt = $db->query($query);
 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$stats['pending_invoices'] = $result['pending_count'];
+$stats['paid_invoices'] = $result['paid_count'];
 $stats['overdue_invoices'] = $result['overdue_count'];
 $stats['total_amount_pending'] = $result['total_pending'];
 
@@ -70,8 +70,8 @@ include '../includes/header.php';
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-title">Facturas Pendientes</div>
-            <div class="stat-value"><?php echo $stats['pending_invoices']; ?></div>
+            <div class="stat-title">Facturas Pagadas</div>
+            <div class="stat-value"><?php echo $stats['paid_invoices']; ?></div>
             <a href="invoices/index.php?status=pending" class="stat-link">Ver detalles</a>
         </div>
 
