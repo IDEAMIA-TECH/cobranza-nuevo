@@ -83,6 +83,14 @@ function parsePaymentXML($xml_content) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
+        // Iniciar transacción
+        $db->beginTransaction();
+
+        // Validar CSRF token
+        if (!isset($_POST['csrf_token']) || !SecurityHelper::validateCSRF($_POST['csrf_token'])) {
+            throw new Exception('Error de validación de seguridad');
+        }
+
         // Procesar archivo XML si fue subido
         if (isset($_FILES['xml_file']) && $_FILES['xml_file']['error'] === UPLOAD_ERR_OK) {
             $xml_content = file_get_contents($_FILES['xml_file']['tmp_name']);
@@ -116,9 +124,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Si se envió el formulario completo
         if (isset($_POST['save_payment'])) {
-            $db->beginTransaction();
-            
-            // Validar datos del pago
             $amount = !empty($payment_data['amount']) ? $payment_data['amount'] : floatval($_POST['amount']);
             $payment_date = !empty($payment_data['payment_date']) ? date('Y-m-d', strtotime($payment_data['payment_date'])) : cleanInput($_POST['payment_date']);
             $payment_method = !empty($payment_data['payment_method']) ? $payment_data['payment_method'] : cleanInput($_POST['payment_method']);
@@ -189,8 +194,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bindParam(":ip_address", $_SERVER['REMOTE_ADDR']);
             $stmt->execute();
             
-            $db->commit();
-            
             // Enviar confirmación por correo
             // Preparar los datos necesarios para el correo
             $payment_info = [
@@ -212,10 +215,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             $success = "Pago registrado correctamente.";
             header("refresh:2;url=../invoices/view.php?id=" . $invoice_id);
+            
+            // Si todo salió bien, confirmar la transacción
+            $db->commit();
         }
     } catch (Exception $e) {
-        $db->rollBack();
-        $error = $e->getMessage();
+        // Solo hacer rollBack si hay una transacción activa
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        $_SESSION['error'] = $e->getMessage();
+        header("Location: ../payments/register.php?invoice_id=" . $invoice_id);
+        exit();
     }
 }
 
