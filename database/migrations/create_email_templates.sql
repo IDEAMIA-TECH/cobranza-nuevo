@@ -13,10 +13,12 @@ SELECT 'Nueva Factura',
             <li>Fecha de Vencimiento: {due_date}</li>
         </ul>
         <p>Por favor, asegúrese de realizar el pago antes de la fecha de vencimiento.</p>
+        <p>Puede descargar su factura desde el siguiente enlace:</p>
+        <p><a href="{invoice_link}">Descargar Factura</a></p>
         <p>Si tiene alguna pregunta o inquietud, no dude en contactarnos.</p>
         <p>Atentamente,<br>IDEAMIA Tech</p>',
        'Plantilla para nuevas facturas',
-       '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","total_amount":"Monto total","issue_date":"Fecha de emisión","due_date":"Fecha de vencimiento"}',
+       '{"invoice_number":"Número de factura","client_name":"Nombre del cliente","total_amount":"Monto total","issue_date":"Fecha de emisión","due_date":"Fecha de vencimiento","invoice_link":"Enlace de descarga de la factura"}',
        'new_invoice'
 WHERE NOT EXISTS (
     SELECT 1 FROM email_templates WHERE type = 'new_invoice'

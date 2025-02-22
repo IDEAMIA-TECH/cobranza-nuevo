@@ -85,12 +85,17 @@ class Mailer {
             
             // Reemplazar variables en el cuerpo del correo
             $body = $template['body'];
+            
+            // Generar enlace de descarga
+            $invoice_link = getBaseUrl() . '/user/invoices/download.php?id=' . $invoice['invoice_id'];
+            
             $replacements = [
                 '{client_name}' => $client['business_name'],
                 '{invoice_number}' => $invoice['invoice_number'],
                 '{total_amount}' => number_format($invoice['total_amount'], 2),
                 '{issue_date}' => date('d/m/Y', strtotime($invoice['issue_date'])),
-                '{due_date}' => date('d/m/Y', strtotime($invoice['due_date']))
+                '{due_date}' => date('d/m/Y', strtotime($invoice['due_date'])),
+                '{invoice_link}' => $invoice_link
             ];
             
             $this->mail->Body = str_replace(
