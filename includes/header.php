@@ -342,11 +342,6 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/email_logs/">
-                        <i class="fas fa-envelope"></i> Historial de Correos
-                    </a>
-                </li>
-                <li>
                     <a href="<?php echo getBaseUrl(); ?>/admin/email_templates/">
                         <i class="fas fa-envelope-open-text"></i> Plantillas de Correo
                     </a>
@@ -362,7 +357,7 @@ if (isLoggedIn()) {
                     </a>
                 </li>
                 <li>
-                    <a href="<?php echo getBaseUrl(); ?>/logout.php">
+                    <a href="<?php echo getBaseUrl(); ?>/admin/logout.php">
                         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                     </a>
                 </li>

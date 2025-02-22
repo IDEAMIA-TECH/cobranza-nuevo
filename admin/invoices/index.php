@@ -87,47 +87,55 @@ include '../../includes/header.php';
 
     <div class="filters-section">
         <form method="GET" class="filters-form">
-            <div class="form-group">
-                <label for="status">Estado:</label>
-                <select name="status" id="status" class="form-control">
-                    <option value="">Todos</option>
-                    <option value="pending" <?php echo $status === 'pending' ? 'selected' : ''; ?>>Pendientes</option>
-                    <option value="overdue" <?php echo $status === 'overdue' ? 'selected' : ''; ?>>Vencidas</option>
-                    <option value="paid" <?php echo $status === 'paid' ? 'selected' : ''; ?>>Pagadas</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="client_id">Cliente:</label>
-                <select name="client_id" id="client_id" class="form-control">
-                    <option value="">Todos</option>
-                    <?php foreach ($clients as $client): ?>
-                        <option value="<?php echo $client['id']; ?>" 
-                                <?php echo $client_id === $client['id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($client['business_name']); ?>
+            <div class="filters-grid">
+                <div class="form-group">
+                    <label for="client">Cliente:</label>
+                    <select name="client" id="client" class="form-control">
+                        <option value="">Todos</option>
+                        <?php foreach ($clients as $client): ?>
+                            <option value="<?php echo $client['id']; ?>" 
+                                    <?php echo isset($_GET['client']) && $_GET['client'] == $client['id'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($client['business_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">Estado:</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="pending" <?php echo isset($_GET['status']) && $_GET['status'] == 'pending' ? 'selected' : ''; ?>>
+                            Pendiente
                         </option>
-                    <?php endforeach; ?>
-                </select>
+                        <option value="paid" <?php echo isset($_GET['status']) && $_GET['status'] == 'paid' ? 'selected' : ''; ?>>
+                            Pagada
+                        </option>
+                        <option value="overdue" <?php echo isset($_GET['status']) && $_GET['status'] == 'overdue' ? 'selected' : ''; ?>>
+                            Vencida
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date_from">Desde:</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control"
+                           value="<?php echo isset($_GET['date_from']) ? $_GET['date_from'] : ''; ?>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="date_to">Hasta:</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control"
+                           value="<?php echo isset($_GET['date_to']) ? $_GET['date_to'] : ''; ?>">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="date_from">Desde:</label>
-                <input type="date" id="date_from" name="date_from" 
-                       value="<?php echo $date_from; ?>" class="form-control">
-            </div>
-
-            <div class="form-group">
-                <label for="date_to">Hasta:</label>
-                <input type="date" id="date_to" name="date_to" 
-                       value="<?php echo $date_to; ?>" class="form-control">
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn">
-                    <i class="fas fa-search"></i> Filtrar
+            <div class="filters-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
                 </button>
                 <a href="index.php" class="btn btn-secondary">
-                    <i class="fas fa-undo"></i> Limpiar
+                    <i class="fas fa-times"></i> Limpiar
                 </a>
             </div>
         </form>

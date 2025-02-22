@@ -337,20 +337,25 @@ include '../../includes/header.php';
 
             <div class="form-section">
                 <h3>Información de Contacto</h3>
-                
-                <div class="form-row">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="contact_name">Nombre de Contacto:</label>
-                        <input type="text" id="contact_name" name="contact_name" required 
-                               value="<?php echo isset($_POST['contact_name']) ? htmlspecialchars($_POST['contact_name']) : ''; ?>"
-                               style="text-transform: uppercase;">
+                        <label for="contact_name">Nombre del Contacto:</label>
+                        <input type="text" id="contact_name" name="contact_name" required>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="phone">Teléfono:</label>
-                        <input type="tel" id="phone" name="phone" required 
-                               value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>"
-                               style="text-transform: uppercase;">
+                        <label for="contact_phone">Teléfono:</label>
+                        <input type="tel" id="contact_phone" name="contact_phone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact_email">Correo Electrónico:</label>
+                        <input type="email" id="contact_email" name="contact_email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact_position">Puesto:</label>
+                        <input type="text" id="contact_position" name="contact_position" required>
                     </div>
                 </div>
             </div>
