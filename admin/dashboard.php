@@ -72,7 +72,7 @@ include '../includes/header.php';
         <div class="stat-card">
             <div class="stat-title">Facturas Pagadas</div>
             <div class="stat-value"><?php echo $stats['paid_invoices']; ?></div>
-            <a href="invoices/index.php?status=pending" class="stat-link">Ver detalles</a>
+            <a href="invoices/index.php?status=paid" class="stat-link">Ver detalles</a>
         </div>
 
         <div class="stat-card warning">
