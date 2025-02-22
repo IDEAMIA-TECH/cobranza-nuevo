@@ -1,5 +1,5 @@
 -- Insertar plantilla para nueva factura si no existe
-INSERT INTO email_templates (name, subject, content, description, variables, type)
+INSERT INTO email_templates (name, subject, body, description, variables, type)
 SELECT 'Nueva Factura',
        'Nueva Factura #{invoice_number}',
        '<h2>Nueva Factura Registrada</h2>

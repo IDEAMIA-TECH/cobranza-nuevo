@@ -84,7 +84,7 @@ class Mailer {
             );
             
             // Reemplazar variables en el cuerpo del correo
-            $body = $template['content'];
+            $body = $template['body'];
             $replacements = [
                 '{client_name}' => $client['business_name'],
                 '{invoice_number}' => $invoice['invoice_number'],
