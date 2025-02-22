@@ -257,146 +257,155 @@ if (isLoggedIn()) {
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">
-                <a href="<?php echo getBaseUrl(); ?>">
-                    <?php if ($logo = Settings::get('company_logo')): ?>
-                        <img src="<?php echo getBaseUrl() . $logo; ?>" 
-                             alt="<?php echo Settings::get('company_name'); ?>" 
-                             class="company-logo">
-                        <span class="company-name">
-                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="company-name">
-                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
-                        </span>
+    <div class="wrapper">
+        <div class="mobile-header">
+            <button class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="mobile-title">
+                <?php echo Settings::get('company_name', 'IDEAMIA Tech'); ?>
+            </div>
+        </div>
+        <header>
+            <nav>
+                <div class="logo">
+                    <a href="<?php echo getBaseUrl(); ?>">
+                        <?php if ($logo = Settings::get('company_logo')): ?>
+                            <img src="<?php echo getBaseUrl() . $logo; ?>" 
+                                 alt="<?php echo Settings::get('company_name'); ?>" 
+                                 class="company-logo">
+                            <span class="company-name">
+                                <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="company-name">
+                                <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </div>
+                <div class="nav-actions">
+                    <a href="#" class="nav-icon" title="Notificaciones">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                    <a href="#" class="nav-icon" title="Mensajes">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <?php if (isLoggedIn()): ?>
+                        <div class="user-menu">
+                            <img src="<?php echo !empty($user_profile['profile_image']) ? 
+                                           getBaseUrl() . $user_profile['profile_image'] : 
+                                           getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
+                                  alt="Usuario" class="avatar">
+                            <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
+                        </div>
                     <?php endif; ?>
-                </a>
-            </div>
-            <div class="nav-actions">
-                <a href="#" class="nav-icon" title="Notificaciones">
-                    <i class="fas fa-bell"></i>
-                </a>
-                <a href="#" class="nav-icon" title="Mensajes">
-                    <i class="fas fa-envelope"></i>
-                </a>
-                <?php if (isLoggedIn()): ?>
-                    <div class="user-menu">
-                        <img src="<?php echo !empty($user_profile['profile_image']) ? 
-                                       getBaseUrl() . $user_profile['profile_image'] : 
-                                       getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
-                              alt="Usuario" class="avatar">
-                        <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
-                    </div>
+                </div>
+            </nav>
+        </header>
+        <?php if (isLoggedIn()): ?>
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <?php if (isAdmin()): ?>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/dashboard.php">
+                            <i class="fas fa-tachometer-alt"></i> Panel Admin
+                        </a>
+                    </li>
+                    <li class="menu-divider">Clientes</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/clients/">
+                            <i class="fas fa-users"></i> Clientes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/clients/pending.php">
+                            <i class="fas fa-user-clock"></i> Clientes Pendientes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/clients/create.php">
+                            <i class="fas fa-user-plus"></i> Nuevo Cliente
+                        </a>
+                    </li>
+                    <li class="menu-divider">Facturación</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/invoices/">
+                            <i class="fas fa-file-invoice"></i> Facturas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/invoices/create.php">
+                            <i class="fas fa-file-invoice"></i> Nueva Factura
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/payments/register.php">
+                            <i class="fas fa-money-bill"></i> Registrar Pago
+                        </a>
+                    </li>
+                    <li class="menu-divider">Sistema</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/activity_logs/">
+                            <i class="fas fa-history"></i> Registro de Actividad
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/email_templates/">
+                            <i class="fas fa-envelope-open-text"></i> Plantillas de Correo
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/settings/">
+                            <i class="fas fa-cog"></i> Configuración
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/profile/">
+                            <i class="fas fa-user-circle"></i> Mi Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/admin/logout.php">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </li>
+                <?php else: ?>
+                    <li class="menu-divider">Mi Cuenta</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/dashboard/">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/profile/">
+                            <i class="fas fa-user-circle"></i> Mi Perfil
+                        </a>
+                    </li>
+                    <li class="menu-divider">Facturación</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/invoices/">
+                            <i class="fas fa-file-invoice"></i> Mis Facturas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/payments/">
+                            <i class="fas fa-money-bill"></i> Mis Pagos
+                        </a>
+                    </li>
+                    <li class="menu-divider">Soporte</li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/support/">
+                            <i class="fas fa-question-circle"></i> Ayuda
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo getBaseUrl(); ?>/user/logout.php">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </li>
                 <?php endif; ?>
-            </div>
-        </nav>
-    </header>
-    <?php if (isLoggedIn()): ?>
-    <aside class="sidebar">
-        <ul class="sidebar-menu">
-            <?php if (isAdmin()): ?>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/dashboard.php">
-                        <i class="fas fa-tachometer-alt"></i> Panel Admin
-                    </a>
-                </li>
-                <li class="menu-divider">Clientes</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/clients/">
-                        <i class="fas fa-users"></i> Clientes
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/clients/pending.php">
-                        <i class="fas fa-user-clock"></i> Clientes Pendientes
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/clients/create.php">
-                        <i class="fas fa-user-plus"></i> Nuevo Cliente
-                    </a>
-                </li>
-                <li class="menu-divider">Facturación</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/invoices/">
-                        <i class="fas fa-file-invoice"></i> Facturas
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/invoices/create.php">
-                        <i class="fas fa-file-invoice"></i> Nueva Factura
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/payments/register.php">
-                        <i class="fas fa-money-bill"></i> Registrar Pago
-                    </a>
-                </li>
-                <li class="menu-divider">Sistema</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/activity_logs/">
-                        <i class="fas fa-history"></i> Registro de Actividad
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/email_templates/">
-                        <i class="fas fa-envelope-open-text"></i> Plantillas de Correo
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/settings/">
-                        <i class="fas fa-cog"></i> Configuración
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/profile/">
-                        <i class="fas fa-user-circle"></i> Mi Perfil
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/admin/logout.php">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                    </a>
-                </li>
-            <?php else: ?>
-                <li class="menu-divider">Mi Cuenta</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/dashboard/">
-                        <i class="fas fa-home"></i> Inicio
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/profile/">
-                        <i class="fas fa-user-circle"></i> Mi Perfil
-                    </a>
-                </li>
-                <li class="menu-divider">Facturación</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/invoices/">
-                        <i class="fas fa-file-invoice"></i> Mis Facturas
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/payments/">
-                        <i class="fas fa-money-bill"></i> Mis Pagos
-                    </a>
-                </li>
-                <li class="menu-divider">Soporte</li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/support/">
-                        <i class="fas fa-question-circle"></i> Ayuda
-                    </a>
-                </li>
-                <li>
-                    <a href="<?php echo getBaseUrl(); ?>/user/logout.php">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                    </a>
-                </li>
-            <?php endif; ?>
-        </ul>
-    </aside>
-    <?php endif; ?>
-    <main> 
+            </ul>
+        </aside>
+        <?php endif; ?>
+        <main> 

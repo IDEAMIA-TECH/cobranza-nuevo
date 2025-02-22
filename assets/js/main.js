@@ -1,31 +1,32 @@
-// Código existente...
+// Funciones existentes...
 
-// Navegación móvil
+// Toggle del menú móvil
 document.addEventListener('DOMContentLoaded', function() {
-    const navToggle = document.querySelector('.nav-toggle');
+    const menuToggle = document.querySelector('.menu-toggle');
     const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
     
-    if (navToggle && sidebar) {
-        navToggle.addEventListener('click', function() {
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
             sidebar.classList.toggle('active');
         });
     }
     
-    // Cerrar menú al hacer clic en un enlace
-    const sidebarLinks = sidebar.querySelectorAll('a');
-    sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(e.target) && 
+                !menuToggle.contains(e.target) && 
+                sidebar.classList.contains('active')) {
                 sidebar.classList.remove('active');
             }
-        });
+        }
     });
-});
-
-// Manejar redimensionamiento de ventana
-window.addEventListener('resize', function() {
-    const sidebar = document.querySelector('.sidebar');
-    if (window.innerWidth > 768) {
-        sidebar.classList.remove('active');
-    }
+    
+    // Ajustar en cambio de tamaño de ventana
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
 }); 
