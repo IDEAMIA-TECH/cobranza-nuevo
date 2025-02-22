@@ -111,11 +111,22 @@ class Mailer {
                     'email' => $client['email'],
                     'name' => $client['business_name']
                 ], $this->mail->Subject, 'new_invoice', $invoice['invoice_number']);
+                error_log("Correo enviado exitosamente a: " . $client['email']);
                 return true;
             }
+            error_log("Fallo al enviar correo a: " . $client['email']);
+            $this->logEmail([
+                'email' => $client['email'],
+                'name' => $client['business_name']
+            ], $this->mail->Subject, 'new_invoice', $invoice['invoice_number'], 'failed', $this->mail->ErrorInfo);
+            return false;
             
         } catch (Exception $e) {
             error_log("Error enviando correo a {$client['email']}: " . $e->getMessage());
+            $this->logEmail([
+                'email' => $client['email'],
+                'name' => $client['business_name']
+            ], $this->mail->Subject ?? 'Error', 'new_invoice', $invoice['invoice_number'], 'failed', $e->getMessage());
             return false;
         }
     }
@@ -432,24 +443,42 @@ class Mailer {
                 $this->db = $database->getConnection();
             }
 
+            // Debug log
+            error_log("Intentando registrar email: " . json_encode([
+                'email' => $recipient['email'],
+                'name' => $recipient['name'] ?? '',
+                'subject' => $subject,
+                'type' => $type,
+                'related_id' => $related_id,
+                'status' => $status
+            ]));
+
             $query = "INSERT INTO email_logs 
                      (recipient_email, recipient_name, subject, email_type, related_id, status, error_message, created_at) 
                      VALUES 
                      (:email, :name, :subject, :type, :related_id, :status, :error, NOW())";
             
             $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':email', $recipient['email'], PDO::PARAM_STR);
-            $stmt->bindParam(':name', $recipient['name'] ?? '', PDO::PARAM_STR);
-            $stmt->bindParam(':subject', $subject);
-            $stmt->bindParam(':type', $type);
+            
+            // Validar y limpiar datos antes de insertar
+            $recipientEmail = filter_var($recipient['email'], FILTER_SANITIZE_EMAIL);
+            $recipientName = isset($recipient['name']) ? substr(trim($recipient['name']), 0, 255) : '';
+            $emailSubject = substr(trim($subject), 0, 255);
+            $emailType = substr(trim($type), 0, 50);
+            
+            $stmt->bindParam(':email', $recipientEmail, PDO::PARAM_STR);
+            $stmt->bindParam(':name', $recipientName, PDO::PARAM_STR);
+            $stmt->bindParam(':subject', $emailSubject, PDO::PARAM_STR);
+            $stmt->bindParam(':type', $emailType, PDO::PARAM_STR);
             $stmt->bindParam(':related_id', $related_id, PDO::PARAM_STR);
-            $stmt->bindParam(':status', $status);
-            $stmt->bindParam(':error', $error);
+            $stmt->bindParam(':status', $status, PDO::PARAM_STR);
+            $stmt->bindParam(':error', $error, PDO::PARAM_STR);
             
             $result = $stmt->execute();
             
             if (!$result) {
-                throw new Exception('Error al guardar el log de correo');
+                $errorInfo = $stmt->errorInfo();
+                throw new Exception('Error al guardar el log de correo: ' . $errorInfo[2]);
             }
             
             return true;
