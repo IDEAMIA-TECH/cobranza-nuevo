@@ -91,10 +91,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $invoice_id = (int)$_POST['invoice_id'];
-        $amount = filter_var($_POST['amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $amount = (float)str_replace(',', '', $_POST['amount']);
         $payment_date = cleanInput($_POST['payment_date']);
         $payment_method = cleanInput($_POST['payment_method']);
         $reference = cleanInput($_POST['reference']);
+
+        if ($amount <= 0) {
+            throw new Exception('El monto debe ser mayor a cero');
+        }
 
         // Obtener información de la factura
         $query = "SELECT i.*, c.business_name, c.email, u.email as client_email 
@@ -126,6 +130,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($amount > $remaining_balance) {
             throw new Exception('El monto del pago excede el saldo pendiente');
         }
+
+        // Registrar actividad
+        $query = "INSERT INTO activity_logs (user_id, action, description, ip_address) 
+                 VALUES (:user_id, :action, :description, :ip_address)";
+        $description = "Registró pago de $" . number_format($amount, 2) . 
+                      " para la factura " . $invoice_data['invoice_number'];
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':user_id', $_SESSION['user_id']);
+        $stmt->bindParam(':action', 'register_payment');
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':ip_address', $_SERVER['REMOTE_ADDR']);
+        $stmt->execute();
 
         // Registrar el pago
         $query = "INSERT INTO payments (invoice_id, amount, payment_date, payment_method, reference) 
@@ -169,7 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         $_SESSION['success'] = "Pago registrado correctamente";
-        header("Location: index.php");
+        header("Location: ../invoices/view.php?id=" . $invoice_id);
         exit();
 
     } catch (Exception $e) {
@@ -259,22 +275,22 @@ include '../../includes/header.php';
 
             <form method="POST" class="payment-form">
                 <?php echo SecurityHelper::getCSRFTokenField(); ?>
-                <input type="hidden" name="save_payment" value="1">
+                <input type="hidden" name="invoice_id" value="<?php echo $invoice_id; ?>">
                 
                 <div class="form-section">
                     <h3>Información del Pago</h3>
                     <div class="form-group">
                         <label for="amount">Monto:</label>
                         <input type="number" id="amount" name="amount" step="0.01" min="0.01" 
-                              value="<?php echo isset($payment_data['amount']) ? $payment_data['amount'] : ''; ?>"
-                              <?php echo isset($payment_data['amount']) ? 'readonly' : 'required'; ?>>
+                              value="<?php echo isset($payment_data['amount']) ? $payment_data['amount'] : $result['pending_amount']; ?>"
+                              required>
                     </div>
                     
                     <div class="form-group">
                         <label for="payment_date">Fecha de Pago:</label>
                         <input type="date" id="payment_date" name="payment_date" 
-                              value="<?php echo isset($payment_data['payment_date']) ? date('Y-m-d', strtotime($payment_data['payment_date'])) : ''; ?>"
-                              <?php echo isset($payment_data['payment_date']) ? 'readonly' : 'required'; ?>>
+                              value="<?php echo date('Y-m-d'); ?>"
+                              required>
                     </div>
 
                     <div class="form-group">
