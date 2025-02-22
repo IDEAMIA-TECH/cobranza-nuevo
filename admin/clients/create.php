@@ -120,8 +120,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         // Validar contraseña
-        if (!SecurityHelper::validatePassword($password)) {
-            throw new Exception('La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales');
+        $password_validation = validatePassword($password);
+        if ($password_validation !== true) {
+            throw new Exception($password_validation);
         }
         
         // Validar régimen fiscal y asegurar que existe en el catálogo
@@ -276,7 +277,16 @@ include '../../includes/header.php';
                 <div class="form-group">
                     <label for="password">Contraseña:</label>
                     <input type="password" id="password" name="password" required>
-                    <small>Mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales</small>
+                    <small class="form-text text-muted">
+                        La contraseña debe cumplir con los siguientes requisitos:
+                        <ul>
+                            <li>Mínimo 8 caracteres</li>
+                            <li>Al menos una letra mayúscula</li>
+                            <li>Al menos una letra minúscula</li>
+                            <li>Al menos un número</li>
+                            <li>Al menos un carácter especial (!@#$%^&*(),.?":{}|<>)</li>
+                        </ul>
+                    </small>
                 </div>
             </div>
 

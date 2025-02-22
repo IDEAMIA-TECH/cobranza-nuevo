@@ -45,4 +45,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST)) {
         die('Error de validación CSRF');
     }
 }
+
+function validatePassword($password) {
+    // Mínimo 8 caracteres
+    if (strlen($password) < 8) {
+        return "La contraseña debe tener al menos 8 caracteres";
+    }
+
+    // Debe contener al menos una letra mayúscula
+    if (!preg_match('/[A-Z]/', $password)) {
+        return "La contraseña debe contener al menos una letra mayúscula";
+    }
+
+    // Debe contener al menos una letra minúscula
+    if (!preg_match('/[a-z]/', $password)) {
+        return "La contraseña debe contener al menos una letra minúscula";
+    }
+
+    // Debe contener al menos un número
+    if (!preg_match('/[0-9]/', $password)) {
+        return "La contraseña debe contener al menos un número";
+    }
+
+    // Debe contener al menos un carácter especial
+    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
+        return "La contraseña debe contener al menos un carácter especial (!@#$%^&*(),.?\":{}|<>)";
+    }
+
+    return true;
+}
 ?> 
