@@ -133,6 +133,15 @@ class Mailer {
     
     public function sendPaymentConfirmation($client, $invoice, $payment_info) {
         try {
+            // Validar datos requeridos
+            if (empty($client['email']) || empty($client['business_name'])) {
+                error_log("Datos de cliente incompletos para enviar confirmación de pago");
+                return false;
+            }
+
+            // Limpiar destinatarios anteriores
+            $this->mail->clearAddresses();
+            
             $this->mail->addAddress($client['email'], $client['business_name']);
             $this->mail->Subject = 'Confirmación de Pago - IDEAMIA Tech';
             
@@ -157,11 +166,30 @@ class Mailer {
                 IDEAMIA Tech</p>
             ";
             
-            $this->mail->send();
-            return true;
+            // Enviar correo y registrar
+            if ($this->mail->send()) {
+                // Registrar el envío del correo
+                $this->logEmail([
+                    'email' => $client['email'],
+                    'name' => $client['business_name']
+                ], $this->mail->Subject, 'payment_confirmation', $invoice['invoice_number']);
+                error_log("Correo de confirmación de pago enviado exitosamente a: " . $client['email']);
+                return true;
+            }
+            
+            error_log("Fallo al enviar correo de confirmación de pago a: " . $client['email']);
+            $this->logEmail([
+                'email' => $client['email'],
+                'name' => $client['business_name']
+            ], $this->mail->Subject, 'payment_confirmation', $invoice['invoice_number'], 'failed', $this->mail->ErrorInfo);
+            return false;
             
         } catch (Exception $e) {
-            error_log("Error enviando correo: " . $e->getMessage());
+            error_log("Error enviando correo de confirmación de pago a {$client['email']}: " . $e->getMessage());
+            $this->logEmail([
+                'email' => $client['email'],
+                'name' => $client['business_name']
+            ], $this->mail->Subject ?? 'Error', 'payment_confirmation', $invoice['invoice_number'], 'failed', $e->getMessage());
             return false;
         }
     }
