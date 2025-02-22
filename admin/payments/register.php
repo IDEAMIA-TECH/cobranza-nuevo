@@ -88,9 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception('Error de validación de seguridad');
         }
 
-        // Inicializar base de datos
-        $database = new Database();
-        $db = $database->getConnection();
+        // Usar la conexión existente
         $db->beginTransaction();
 
         // Validar datos
@@ -169,7 +167,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(':payment_date', $payment_date);
         $stmt->bindParam(':payment_method', $payment_method);
         $stmt->bindParam(':reference', $reference);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            throw new Exception('Error al registrar el pago: ' . implode(', ', $stmt->errorInfo()));
+        }
 
         // Actualizar estado de la factura si está pagada completamente
         $new_total_paid = $total_paid + $amount;
@@ -177,7 +177,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $query = "UPDATE invoices SET status = 'paid' WHERE id = :invoice_id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':invoice_id', $invoice_id);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception('Error al actualizar estado de la factura: ' . implode(', ', $stmt->errorInfo()));
+            }
         }
 
         // Obtener datos del cliente para el correo
@@ -210,6 +212,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $db->rollBack();
         }
         $_SESSION['error'] = $e->getMessage();
+        error_log("Error en registro de pago: " . $e->getMessage());
         header("Location: register.php?invoice_id=" . $invoice_id);
         exit();
     }
