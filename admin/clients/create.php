@@ -223,9 +223,9 @@ include '../../includes/header.php';
                 
                 <div class="form-group">
                     <label for="csf_file">Constancia de Situación Fiscal (PDF):</label>
-                    <input type="file" id="csf_file" name="csf_file" accept=".pdf" required>
+                    <input type="file" id="csf_file" name="csf_file" accept=".pdf">
                     <small class="form-text text-muted">
-                        Suba la Constancia de Situación Fiscal en formato PDF para autocompletar los datos
+                        Opcional: Suba la Constancia de Situación Fiscal en formato PDF para autocompletar los datos
                     </small>
                 </div>
 
