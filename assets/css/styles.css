@@ -1,10 +1,13 @@
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --background-color: #f5f6fa;
+    --primary-color: #6f42c1;
+    --secondary-color: #e83e8c;
+    --background-color: #f8f9fa;
     --text-color: #2c3e50;
     --error-color: #e74c3c;
     --success-color: #2ecc71;
+    --sidebar-width: 250px;
+    --header-height: 60px;
+    --mobile-breakpoint: 768px;
 }
 
 * {
@@ -18,12 +21,23 @@ body {
     line-height: 1.6;
     background-color: var(--background-color);
     color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
 }
 
 header {
-    background-color: var(--primary-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: var(--primary-color);
     color: white;
-    padding: 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
 }
 
 nav {
@@ -51,9 +65,11 @@ nav ul li a:hover {
 }
 
 main {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 20px;
+    transition: margin-left 0.3s ease;
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
 }
 
 .form-container {
@@ -913,4 +929,103 @@ select option {
 
 .d-inline {
     display: inline-block;
+}
+
+/* Estilos para el botón de toggle */
+.menu-toggle {
+    display: flex;
+    align-items: center;
+    z-index: 1001;
+}
+
+.btn-toggle {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.3s ease;
+}
+
+.btn-toggle:hover {
+    transform: scale(1.1);
+}
+
+/* Sidebar responsivo */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: var(--header-height);
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: white;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    padding: 20px 0;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 999;
+}
+
+/* Clase para el sidebar colapsado */
+.sidebar.collapsed {
+    transform: translateX(calc(-1 * var(--sidebar-width)));
+}
+
+/* Ajuste del main cuando el sidebar está colapsado */
+main.sidebar-collapsed {
+    margin-left: 0;
+}
+
+/* Media queries para dispositivos móviles */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(calc(-1 * var(--sidebar-width)));
+        width: 100%;
+        max-width: var(--sidebar-width);
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    main {
+        margin-left: 0;
+        padding: 15px;
+    }
+    
+    .menu-toggle {
+        display: block;
+    }
+    
+    /* Overlay para cuando el menú está abierto */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 998;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+}
+
+/* Ajustes adicionales para dispositivos muy pequeños */
+@media (max-width: 480px) {
+    :root {
+        --header-height: 50px;
+    }
+    
+    .btn-toggle {
+        font-size: 1.2rem;
+    }
+    
+    main {
+        padding: 10px;
+    }
 } 
