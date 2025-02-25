@@ -258,41 +258,19 @@ if (isLoggedIn()) {
 </head>
 <body>
     <header>
-        <nav>
-            <div class="logo">
-                <a href="<?php echo getBaseUrl(); ?>">
-                    <?php if ($logo = Settings::get('company_logo')): ?>
-                        <img src="<?php echo getBaseUrl() . $logo; ?>" 
-                             alt="<?php echo Settings::get('company_name'); ?>" 
-                             class="company-logo">
-                        <span class="company-name">
-                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="company-name">
-                            <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
-                        </span>
-                    <?php endif; ?>
-                </a>
+        <div class="menu-toggle">
+            <button id="sidebar-toggle" class="btn-toggle" title="Mostrar/Ocultar menú">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="header-content">
+            <div class="header-logo">
+                <img src="<?php echo getBaseUrl(); ?>/assets/img/logo.png" alt="Logo" class="logo-img">
             </div>
-            <div class="nav-actions">
-                <a href="#" class="nav-icon" title="Notificaciones">
-                    <i class="fas fa-bell"></i>
-                </a>
-                <a href="#" class="nav-icon" title="Mensajes">
-                    <i class="fas fa-envelope"></i>
-                </a>
-                <?php if (isLoggedIn()): ?>
-                    <div class="user-menu">
-                        <img src="<?php echo !empty($user_profile['profile_image']) ? 
-                                       getBaseUrl() . $user_profile['profile_image'] : 
-                                       getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
-                              alt="Usuario" class="avatar">
-                        <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
-                    </div>
-                <?php endif; ?>
+            <div class="header-title">
+                IDEAMIA - COBRANZA
             </div>
-        </nav>
+        </div>
     </header>
     <?php if (isLoggedIn()): ?>
     <aside class="sidebar">
