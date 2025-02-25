@@ -271,6 +271,23 @@ if (isLoggedIn()) {
                 IDEAMIA - COBRANZA
             </div>
         </div>
+        <div class="header-actions">
+            <a href="#" class="nav-icon" title="Notificaciones">
+                <i class="fas fa-bell"></i>
+            </a>
+            <a href="#" class="nav-icon" title="Mensajes">
+                <i class="fas fa-envelope"></i>
+            </a>
+            <?php if (isLoggedIn()): ?>
+                <div class="user-menu">
+                    <img src="<?php echo !empty($user_profile['profile_image']) ? 
+                                   getBaseUrl() . $user_profile['profile_image'] : 
+                                   getBaseUrl() . '/assets/img/default-avatar.png'; ?>" 
+                          alt="Usuario" class="avatar">
+                    <span><?php echo $_SESSION['email'] ?? 'Usuario'; ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
     </header>
     <?php if (isLoggedIn()): ?>
     <aside class="sidebar">
