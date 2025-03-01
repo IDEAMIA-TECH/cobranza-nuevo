@@ -265,11 +265,9 @@ if (isLoggedIn()) {
         </div>
         <div class="header-content">
             <div class="header-logo">
-                <?php if ($logo = Settings::get('company_logo')): ?>
-                    <img src="<?php echo getBaseUrl() . $logo; ?>" 
-                         alt="<?php echo Settings::get('company_name'); ?>" 
-                         class="logo-img">
-                <?php endif; ?>
+                <img src="<?php echo getBaseUrl(); ?>/assets/img/logo.png" 
+                     alt="<?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>" 
+                     class="logo-img">
             </div>
             <div class="header-title">
                 <?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>
