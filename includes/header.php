@@ -265,7 +265,7 @@ if (isLoggedIn()) {
         </div>
         <div class="header-content">
             <div class="header-logo">
-                <img src="<?php echo getBaseUrl(); ?>/assets/img/logo.png" 
+                <img src="<?php echo getBaseUrl(); ?>/assets/img/logo_1740167121.png" 
                      alt="<?php echo Settings::get('company_name', 'Sistema de Cobranza'); ?>" 
                      class="logo-img">
             </div>
