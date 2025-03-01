@@ -5,8 +5,8 @@
     --text-color: #2c3e50;
     --error-color: #e74c3c;
     --success-color: #2ecc71;
-    --sidebar-width: 250px;
-    --header-height: 60px;
+    --sidebar-width: min(250px, 80vw);
+    --header-height: min(60px, 15vh);
     --mobile-breakpoint: 768px;
 }
 
@@ -16,14 +16,19 @@
     box-sizing: border-box;
 }
 
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
 body {
     font-family: 'Arial', sans-serif;
     line-height: 1.6;
     background-color: var(--background-color);
     color: var(--text-color);
-    margin: 0;
-    padding: 0;
     overflow-x: hidden;
+    min-height: 100vh;
+    padding-top: var(--header-height);
 }
 
 header {
@@ -38,7 +43,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 max(1rem, 2vw);
 }
 
 /* Contenedor del logo y título */
@@ -46,16 +51,21 @@ header {
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex: 1;
+    justify-content: center;
 }
 
 .header-logo {
+    max-width: 40%;
     display: flex;
     align-items: center;
 }
 
 .logo-img {
-    height: 35px;
+    height: min(35px, 8vw);
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
 }
 
 .header-title {
@@ -114,12 +124,15 @@ header {
 
 /* Ajustes responsivos para el header */
 @media (max-width: 768px) {
-    header {
-        padding: 0 0.5rem;
+    html {
+        font-size: 14px;
     }
     
     .header-title {
-        font-size: 1rem;
+        font-size: clamp(0.8rem, 4vw, 1.2rem);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .user-menu span {
@@ -127,15 +140,58 @@ header {
     }
     
     .header-actions {
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
     
     .nav-icon {
-        font-size: 1.1rem;
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
+    
+    .user-menu .avatar {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    :root {
+        --header-height: 50px;
+    }
+    
+    .header-content {
+        gap: 0.5rem;
     }
     
     .logo-img {
-        height: 30px;
+        height: min(30px, 6vw);
+    }
+    
+    .header-actions {
+        gap: 0.25rem;
+    }
+    
+    .nav-icon {
+        font-size: 0.9rem;
+        padding: 0.4rem;
+    }
+    
+    .user-menu .avatar {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Ajustes para pantallas grandes */
+@media (min-width: 1200px) {
+    html {
+        font-size: 18px;
+    }
+    
+    :root {
+        --sidebar-width: 280px;
+        --header-height: 70px;
     }
 }
 
@@ -164,11 +220,23 @@ nav ul li a:hover {
 }
 
 main {
-    margin-left: var(--sidebar-width);
-    margin-top: var(--header-height);
-    padding: 20px;
+    margin-left: 0;
+    padding: max(1rem, 2vw);
     transition: margin-left 0.3s ease;
-    max-width: 1200px;
+    width: 100%;
+    min-height: calc(100vh - var(--header-height));
+}
+
+@media (min-width: 769px) {
+    main {
+        margin-left: var(--sidebar-width);
+        width: calc(100% - var(--sidebar-width));
+    }
+    
+    main.sidebar-collapsed {
+        margin-left: 0;
+        width: 100%;
+    }
 }
 
 .form-container {
