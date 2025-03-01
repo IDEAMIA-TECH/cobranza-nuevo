@@ -12,9 +12,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('main');
-    let overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
-    document.body.appendChild(overlay);
+    
+    // Verificar que los elementos existan
+    if (!sidebarToggle || !sidebar || !mainContent) {
+        console.warn('No se encontraron elementos necesarios para el sidebar');
+        return;
+    }
+    
+    // Crear overlay solo si no existe
+    let overlay = document.querySelector('.sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+    }
     
     // Aplicar el estado guardado al cargar la página
     if (getSavedSidebarState() && window.innerWidth > 768) {
@@ -41,8 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Cerrar sidebar al hacer click en el overlay
-    overlay.addEventListener('click', closeMobileSidebar);
+    // Agregar event listener al overlay solo si existe
+    if (overlay) {
+        overlay.addEventListener('click', closeMobileSidebar);
+    }
     
     // Manejar cambios de tamaño de ventana
     window.addEventListener('resize', function() {

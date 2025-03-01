@@ -293,7 +293,7 @@ if (isLoggedIn()) {
         </div>
     </header>
     <?php if (isLoggedIn()): ?>
-    <aside class="sidebar">
+    <aside id="sidebar" class="sidebar">
         <ul class="sidebar-menu">
             <?php if (isAdmin()): ?>
                 <li>
