@@ -1034,43 +1034,27 @@ select option {
 .menu-toggle {
     display: flex;
     align-items: center;
-    z-index: 1001;
 }
 
 .btn-toggle {
     background: transparent;
     border: none;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    padding: 5px;
-    transition: transform 0.3s ease;
-    width: 40px;
-    height: 40px;
+    padding: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
 .btn-toggle:hover {
     background: rgba(255,255,255,0.1);
+    border-radius: 4px;
 }
 
-.btn-toggle:active {
-    background: rgba(255,255,255,0.2);
-}
-
-/* Animación del icono del menú */
-.btn-toggle i {
-    transition: transform 0.3s ease;
-}
-
-.sidebar.collapsed + main .btn-toggle i {
-    transform: rotate(180deg);
-}
-
-/* Sidebar responsivo */
+/* Estilos para el sidebar */
 .sidebar {
     position: fixed;
     left: 0;
@@ -1078,29 +1062,43 @@ select option {
     bottom: 0;
     width: var(--sidebar-width);
     background: white;
-    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-    padding: 20px 0;
-    overflow-y: auto;
     transition: transform 0.3s ease;
-    z-index: 999;
+    z-index: 100;
+    overflow-y: auto;
 }
 
-/* Clase para el sidebar colapsado */
+/* Clase para cuando el sidebar está colapsado */
 .sidebar.collapsed {
-    transform: translateX(calc(-1 * var(--sidebar-width)));
+    transform: translateX(-100%);
 }
 
-/* Ajuste del main cuando el sidebar está colapsado */
+/* Ajuste del contenido principal cuando el sidebar está colapsado */
+main {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+}
+
 main.sidebar-collapsed {
     margin-left: 0;
 }
 
-/* Media queries para dispositivos móviles */
+/* Overlay para dispositivos móviles */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+/* Ajustes responsivos */
 @media (max-width: 768px) {
     .sidebar {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
-        width: 100%;
-        max-width: var(--sidebar-width);
+        transform: translateX(-100%);
+        width: 280px;
     }
     
     .sidebar.active {
@@ -1109,23 +1107,6 @@ main.sidebar-collapsed {
     
     main {
         margin-left: 0;
-        padding: 15px;
-    }
-    
-    .menu-toggle {
-        display: block;
-    }
-    
-    /* Overlay para cuando el menú está abierto */
-    .sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: var(--header-height);
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 998;
     }
     
     .sidebar-overlay.active {

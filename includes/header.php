@@ -35,6 +35,7 @@ if (isLoggedIn()) {
     <title><?php echo Settings::get('system_name', 'Sistema de Cobranza'); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?php echo getBaseUrl(); ?>/assets/css/styles.css">
+    <script src="<?php echo getBaseUrl(); ?>/assets/js/main.js" defer></script>
     <style>
         :root {
             --primary-color: #6f42c1;
