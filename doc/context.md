@@ -83,8 +83,6 @@ Los correos enviados por el sistema serán elegantes y concretos, incluyendo:
 - **Pagos**: Número de factura, Monto, Fecha de Pago, Estado.
 - **Usuarios**: Administradores y Clientes.
 
-
-
 ### Esquema Detallado de Base de Datos
 
 #### 1. Tabla: users
@@ -176,5 +174,119 @@ Los correos enviados por el sistema serán elegantes y concretos, incluyendo:
 - clients ─1:N─ notifications
 - invoices ─1:N─ notifications
 - users ─1:N─ activity_logs
+
+---
+
+# Módulo de Gestión Fiscal
+
+## Características Principales
+
+### 🔒 Control de Acceso
+- Acceso exclusivo para usuarios con nivel "contador"
+- Sistema de autenticación y autorización integrado
+
+### 👥 Gestión de Clientes
+- Registro y administración de clientes
+- Control de declaraciones fiscales:
+  - Mensuales
+  - Bimestrales
+
+### 📤 Procesamiento de Facturas
+- Carga masiva de archivos XML
+- Procesamiento automático de información
+- Validación de estructura y contenido
+
+### 💰 Análisis de IVA
+Desglose detallado de las diferentes tasas de IVA en México:
+- IVA 16%
+- IVA 8%
+- IVA Exento
+- IVA 0%
+- Otros tipos según requerimientos
+
+### 📊 Reportes y Exportación
+- Generación de reportes detallados
+- Exportación a formato Excel
+- Compatibilidad con declaraciones fiscales
+
+### 📋 Sistema de Consultas
+- Almacenamiento histórico de datos
+- Filtros avanzados:
+  - Por cliente
+  - Por rango de fechas
+  - Por tipo de IVA
+
+## Estructura de Base de Datos
+
+### Tabla: accountants
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | INT | PK, AUTO_INCREMENT |
+| user_id | INT | FK → users.id |
+| created_at | TIMESTAMP | Fecha de creación |
+| updated_at | TIMESTAMP | Fecha de actualización |
+
+### Tabla: accountant_clients
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | INT | PK, AUTO_INCREMENT |
+| accountant_id | INT | FK → accountants.id |
+| client_id | INT | FK → clients.id |
+| created_at | TIMESTAMP | Fecha de creación |
+| updated_at | TIMESTAMP | Fecha de actualización |
+
+### Tabla: tax_reports
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | INT | PK, AUTO_INCREMENT |
+| accountant_id | INT | FK → accountants.id |
+| client_id | INT | FK → clients.id |
+| period | ENUM | 'Mensual', 'Bimestral' |
+| start_date | DATE | Inicio del período |
+| end_date | DATE | Fin del período |
+| total_iva_16 | DECIMAL(10,2) | Total IVA 16% |
+| total_iva_8 | DECIMAL(10,2) | Total IVA 8% |
+| total_iva_exento | DECIMAL(10,2) | Total IVA Exento |
+| total_iva_0 | DECIMAL(10,2) | Total IVA 0% |
+| xml_count | INT | Cantidad de XML procesados |
+| report_path | VARCHAR(255) | Ruta del reporte |
+| created_at | TIMESTAMP | Fecha de creación |
+
+### Tabla: uploaded_xmls
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | INT | PK, AUTO_INCREMENT |
+| accountant_id | INT | FK → accountants.id |
+| client_id | INT | FK → clients.id |
+| invoice_uuid | VARCHAR(36) | UUID único de factura |
+| xml_path | VARCHAR(255) | Ruta del archivo XML |
+| processed | BOOLEAN | Estado de procesamiento |
+| created_at | TIMESTAMP | Fecha de creación |
+
+## Flujo de Trabajo
+
+1. ### Inicio de Sesión
+   - Autenticación del contador
+   - Acceso al panel de control
+
+2. ### Gestión de Clientes
+   - Alta de nuevos clientes
+   - Asignación de clientes al contador
+   - Configuración de períodos fiscales
+
+3. ### Procesamiento de Documentos
+   - Carga masiva de XML
+   - Validación automática
+   - Extracción de datos fiscales
+
+4. ### Generación de Reportes
+   - Cálculo de desgloses de IVA
+   - Almacenamiento en base de datos
+   - Generación de documentos Excel
+
+5. ### Consulta y Seguimiento
+   - Acceso al historial de reportes
+   - Filtrado de información
+   - Exportación de datos históricos
 
 ---
